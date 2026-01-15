@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institute MCQ Test System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Institute MCQ Test System</h1>
+            <div class="lang-selector">
+                <button onclick="changeLanguage('en')" class="lang-btn active">English</button>
+                <button onclick="changeLanguage('ur')" class="lang-btn">اردو</button>
+            </div>
+        </div>
+        
+        <div class="main-menu">
+            <div class="card" onclick="showStudentLogin()">
+                <div class="card-icon">👨‍🎓</div>
+                <h2 data-en="Student Portal" data-ur="طالب علم پورٹل">Student Portal</h2>
+                <p data-en="Take your test" data-ur="اپنا ٹیسٹ دیں">Take your test</p>
+            </div>
+            <div class="card" onclick="showTeacherLogin()">
+                <div class="card-icon">👨‍🏫</div>
+                <h2 data-en="Teacher Portal" data-ur="استاد پورٹل">Teacher Portal</h2>
+                <p data-en="Manage tests and results" data-ur="ٹیسٹ اور نتائج کا انتظام کریں">Manage tests and results</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Login Modal -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('studentModal')">&times;</span>
+            <h2 data-en="Student Login" data-ur="طالب علم لاگ ان">Student Login</h2>
+            <form id="studentForm" onsubmit="studentLogin(event)">
+                <input type="text" id="studentId" placeholder="Student ID / طالب علم آئی ڈی" required>
+                <input type="text" id="studentName" placeholder="Student Name / طالب علم کا نام" required>
+                <select id="courseSelect" required>
+                    <option value="" data-en="Select Course" data-ur="کورس منتخب کریں">Select Course</option>
+                </select>
+                <select id="timingSelect" required>
+                    <option value="" data-en="Select Timing" data-ur="ٹائمنگ منتخب کریں">Select Timing</option>
+                </select>
+                <select id="monthSelect" required>
+                    <option value="" data-en="Select Month" data-ur="مہینہ منتخب کریں">Select Month</option>
+                    <option value="1" data-en="Month 1" data-ur="پہلا مہینہ">Month 1</option>
+                    <option value="2" data-en="Month 2" data-ur="دوسرا مہینہ">Month 2</option>
+                    <option value="3" data-en="Month 3" data-ur="تیسرا مہینہ">Month 3</option>
+                    <option value="4" data-en="Month 4" data-ur="چوتھا مہینہ">Month 4</option>
+                </select>
+                <button type="submit" data-en="Start Test" data-ur="ٹیسٹ شروع کریں">Start Test</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Teacher Login Modal -->
+    <div id="teacherModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('teacherModal')">&times;</span>
+            <h2 data-en="Teacher Login" data-ur="استاد لاگ ان">Teacher Login</h2>
+            <form id="teacherForm" onsubmit="teacherLogin(event)">
+                <input type="text" id="teacherUsername" placeholder="Username / صارف نام" required>
+                <input type="password" id="teacherPassword" placeholder="Password / پاس ورڈ" required>
+                <button type="submit" data-en="Login" data-ur="لاگ ان">Login</button>
+            </form>
+            <p class="demo-info" data-en="Demo: teacher1 / teacher123" data-ur="ڈیمو: teacher1 / teacher123">Demo: teacher1 / teacher123</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
