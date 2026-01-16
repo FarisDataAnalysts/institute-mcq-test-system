@@ -106,8 +106,8 @@ function addCourse() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            document.getElementById('courseName').value = '';
             alert('✅ Course added successfully!');
+            document.getElementById('courseName').value = '';
             loadDashboard();
         } else {
             alert('Error adding course');
@@ -123,27 +123,25 @@ function renderCourses() {
     const list = document.getElementById('coursesList');
     
     if (!dashboardData.courses || dashboardData.courses.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No courses yet</h3><p>Add your first course above</p></div>';
+        list.innerHTML = '<div class=\"empty-state\"><h3>No courses yet</h3><p>Add your first course to get started</p></div>';
         return;
     }
     
-    list.innerHTML = '';
+    let html = '<table><tr><th>Course Name</th><th>Actions</th></tr>';
     dashboardData.courses.forEach(course => {
-        const item = document.createElement('div');
-        item.className = 'list-item';
-        item.style.display = 'flex';
-        item.style.justifyContent = 'space-between';
-        item.style.alignItems = 'center';
-        item.innerHTML = `
-            <strong>📚 ${course.name}</strong>
-            <button class="btn btn-danger" onclick="deleteCourse(${course.id})">Delete</button>
+        html += `
+            <tr>
+                <td>${course.name}</td>
+                <td><button onclick="deleteCourse(${course.id})" class="delete-btn">Delete</button></td>
+            </tr>
         `;
-        list.appendChild(item);
     });
+    html += '</table>';
+    list.innerHTML = html;
 }
 
 function deleteCourse(id) {
-    if (!confirm('Are you sure you want to delete this course?')) return;
+    if (!confirm('Are you sure you want to delete this course? This will fail if there are tests using this course.')) return;
     
     fetch(`/api/teacher/courses/${id}`, {
         method: 'DELETE',
@@ -155,7 +153,7 @@ function deleteCourse(id) {
             alert('✅ Course deleted successfully!');
             loadDashboard();
         } else {
-            alert('Error: ' + (data.error || 'Cannot delete course'));
+            alert(data.error || 'Error deleting course');
         }
     })
     .catch(err => {
@@ -181,8 +179,8 @@ function addTiming() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            document.getElementById('timingName').value = '';
             alert('✅ Timing added successfully!');
+            document.getElementById('timingName').value = '';
             loadDashboard();
         } else {
             alert('Error adding timing');
@@ -198,27 +196,25 @@ function renderTimings() {
     const list = document.getElementById('timingsList');
     
     if (!dashboardData.timings || dashboardData.timings.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No timings yet</h3><p>Add your first timing above</p></div>';
+        list.innerHTML = '<div class=\"empty-state\"><h3>No timings yet</h3><p>Add your first timing to get started</p></div>';
         return;
     }
     
-    list.innerHTML = '';
+    let html = '<table><tr><th>Timing</th><th>Actions</th></tr>';
     dashboardData.timings.forEach(timing => {
-        const item = document.createElement('div');
-        item.className = 'list-item';
-        item.style.display = 'flex';
-        item.style.justifyContent = 'space-between';
-        item.style.alignItems = 'center';
-        item.innerHTML = `
-            <strong>🕐 ${timing.timing}</strong>
-            <button class="btn btn-danger" onclick="deleteTiming(${timing.id})">Delete</button>
+        html += `
+            <tr>
+                <td>${timing.timing}</td>
+                <td><button onclick="deleteTiming(${timing.id})" class="delete-btn">Delete</button></td>
+            </tr>
         `;
-        list.appendChild(item);
     });
+    html += '</table>';
+    list.innerHTML = html;
 }
 
 function deleteTiming(id) {
-    if (!confirm('Are you sure you want to delete this timing?')) return;
+    if (!confirm('Are you sure you want to delete this timing? This will fail if there are tests using this timing.')) return;
     
     fetch(`/api/teacher/timings/${id}`, {
         method: 'DELETE',
@@ -230,7 +226,7 @@ function deleteTiming(id) {
             alert('✅ Timing deleted successfully!');
             loadDashboard();
         } else {
-            alert('Error: ' + (data.error || 'Cannot delete timing'));
+            alert(data.error || 'Error deleting timing');
         }
     })
     .catch(err => {
@@ -241,13 +237,13 @@ function deleteTiming(id) {
 
 // ========== TESTS ==========
 
-function createTest() {
+function addTest() {
     const course_id = document.getElementById('testCourse').value;
     const timing_id = document.getElementById('testTiming').value;
     const month = document.getElementById('testMonth').value;
     const unlock_start = document.getElementById('unlockStart').value;
     const unlock_end = document.getElementById('unlockEnd').value;
-    const duration_minutes = document.getElementById('testDuration').value;
+    const duration_minutes = document.getElementById('testDuration').value || 30;
     
     if (!course_id || !timing_id || !month) {
         alert('Please fill all required fields');
@@ -260,7 +256,7 @@ function createTest() {
         month,
         unlock_start: unlock_start || null,
         unlock_end: unlock_end || null,
-        duration_minutes: duration_minutes || 30
+        duration_minutes
     };
     
     fetch('/api/teacher/tests', {
@@ -271,9 +267,14 @@ function createTest() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Test created successfully! Now add questions to this test.');
+            alert('✅ Test created successfully!');
+            // Clear form
+            document.getElementById('testCourse').value = '';
+            document.getElementById('testTiming').value = '';
+            document.getElementById('testMonth').value = '';
             document.getElementById('unlockStart').value = '';
             document.getElementById('unlockEnd').value = '';
+            document.getElementById('testDuration').value = '30';
             loadDashboard();
         } else {
             alert('Error creating test');
@@ -289,45 +290,33 @@ function renderTests() {
     const list = document.getElementById('testsList');
     
     if (!dashboardData.tests || dashboardData.tests.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No tests yet</h3><p>Create your first test above</p></div>';
+        list.innerHTML = '<div class=\"empty-state\"><h3>No tests yet</h3><p>Create your first test to get started</p></div>';
         return;
     }
     
-    let html = '<table><tr><th>Course</th><th>Timing</th><th>Month</th><th>Unlock Period</th><th>Duration</th><th>Actions</th></tr>';
-    
+    let html = '<table><tr><th>Course</th><th>Timing</th><th>Month</th><th>Duration</th><th>Unlock Period</th><th>Actions</th></tr>';
     dashboardData.tests.forEach(test => {
+        const unlockPeriod = test.unlock_start && test.unlock_end 
+            ? `${test.unlock_start} to ${test.unlock_end}`
+            : 'Always Available';
+        
         html += `
             <tr>
                 <td>${test.course_name}</td>
                 <td>${test.timing}</td>
-                <td>Month ${test.month}</td>
-                <td>${test.unlock_start || 'Not set'} to ${test.unlock_end || 'Not set'}</td>
-                <td>${test.duration_minutes || 30} min</td>
-                <td>
-                    <button class="btn" onclick="viewTestQuestions(${test.id})">Questions</button>
-                    <button class="btn btn-danger" onclick="deleteTest(${test.id})">Delete</button>
-                </td>
+                <td>${test.month}</td>
+                <td>${test.duration_minutes} min</td>
+                <td>${unlockPeriod}</td>
+                <td><button onclick="deleteTest(${test.id})" class="delete-btn">Delete</button></td>
             </tr>
         `;
     });
-    
     html += '</table>';
     list.innerHTML = html;
 }
 
-function viewTestQuestions(testId) {
-    document.getElementById('questionTestSelect').value = testId;
-    showTab('questions');
-    // Manually trigger tab change
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.querySelector('.tab:nth-child(4)').classList.add('active');
-    document.getElementById('questions').classList.add('active');
-    loadQuestions();
-}
-
 function deleteTest(id) {
-    if (!confirm('Are you sure? This will delete the test and all its questions!')) return;
+    if (!confirm('Are you sure you want to delete this test? This will also delete all questions for this test.')) return;
     
     fetch(`/api/teacher/tests/${id}`, {
         method: 'DELETE',
@@ -339,7 +328,7 @@ function deleteTest(id) {
             alert('✅ Test deleted successfully!');
             loadDashboard();
         } else {
-            alert('Error: ' + (data.error || 'Cannot delete test'));
+            alert('Error deleting test');
         }
     })
     .catch(err => {
@@ -354,12 +343,9 @@ function loadQuestions() {
     const testId = document.getElementById('questionTestSelect').value;
     
     if (!testId) {
-        document.getElementById('questionForm').style.display = 'none';
-        document.getElementById('questionsList').innerHTML = '<div class="empty-state"><h3>Select a test</h3><p>Choose a test from the dropdown above</p></div>';
+        document.getElementById('questionsList').innerHTML = '<div class=\"empty-state\"><h3>Select a test</h3><p>Choose a test to view and manage questions</p></div>';
         return;
     }
-    
-    document.getElementById('questionForm').style.display = 'block';
     
     fetch(`/api/teacher/tests/${testId}/questions`, { headers })
         .then(res => res.json())
@@ -377,26 +363,27 @@ function renderQuestions() {
     const list = document.getElementById('questionsList');
     
     if (allQuestions.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No questions yet</h3><p>Add questions using the form above (at least 1 required)</p></div>';
+        list.innerHTML = '<div class=\"empty-state\"><h3>No questions yet</h3><p>Add questions to this test</p></div>';
         return;
     }
     
-    let html = `<p><strong>Total Questions: ${allQuestions.length}</strong> ✅</p>`;
-    html += '<table><tr><th>#</th><th>Question</th><th>Correct Answer</th><th>Actions</th></tr>';
-    
+    let html = '<table><tr><th>#</th><th>Question</th><th>Options</th><th>Correct</th><th>Actions</th></tr>';
     allQuestions.forEach((q, index) => {
         html += `
             <tr>
                 <td>${index + 1}</td>
-                <td>${q.question_text.substring(0, 100)}${q.question_text.length > 100 ? '...' : ''}</td>
-                <td><strong>${q.correct_answer}</strong></td>
+                <td>${q.question_text}</td>
                 <td>
-                    <button class="btn btn-danger" onclick="deleteQuestion(${q.id})">Delete</button>
+                    A: ${q.option_a}<br>
+                    B: ${q.option_b}<br>
+                    C: ${q.option_c}<br>
+                    D: ${q.option_d}
                 </td>
+                <td>${q.correct_answer}</td>
+                <td><button onclick="deleteQuestion(${q.id})" class="delete-btn">Delete</button></td>
             </tr>
         `;
     });
-    
     html += '</table>';
     list.innerHTML = html;
 }
@@ -495,7 +482,7 @@ function renderResults(results) {
     const list = document.getElementById('resultsList');
     
     if (results.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No results yet</h3><p>Results will appear here after students take tests</p></div>';
+        list.innerHTML = '<div class=\"empty-state\"><h3>No results yet</h3><p>Results will appear here after students take tests</p></div>';
         return;
     }
     
@@ -526,8 +513,33 @@ function exportResults() {
     const month = document.getElementById('resultMonth').value;
     const url = month ? `/api/teacher/results/export?month=${month}` : '/api/teacher/results/export';
     
-    // Open in new window to download
-    window.open(url, '_blank');
+    // Create a temporary link with authentication
+    fetch(url, { 
+        headers,
+        method: 'GET'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Export failed - Access Denied. Please login again.');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `results_${month || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+        alert('✅ Results exported successfully!');
+    })
+    .catch(err => {
+        console.error('Export error:', err);
+        alert(err.message || 'Error exporting results. Please try again.');
+    });
 }
 
 // ========== RESET DASHBOARD ==========
