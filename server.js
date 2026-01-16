@@ -169,6 +169,39 @@ app.post('/api/teacher/login', (req, res) => {
   });
 });
 
+// Teacher Registration
+app.post('/api/teacher/register', async (req, res) => {
+  const { username, password, name } = req.body;
+  
+  if (!username || !password || !name) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+  
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  // Check if username exists
+  db.get('SELECT * FROM teachers WHERE username = ?', [username], async (err, existing) => {
+    if (existing) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Insert new teacher (org_id = 1 for demo)
+    db.run(
+      'INSERT INTO teachers (org_id, username, password, name) VALUES (?, ?, ?, ?)',
+      [1, username, hashedPassword, name],
+      function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, message: 'Teacher registered successfully' });
+      }
+    );
+  });
+});
+
 // Get Teacher Dashboard Data
 app.get('/api/teacher/dashboard', authenticateTeacher, (req, res) => {
   const data = {};
@@ -203,6 +236,34 @@ app.post('/api/teacher/courses', authenticateTeacher, (req, res) => {
   );
 });
 
+// Delete Course
+app.delete('/api/teacher/courses/:courseId', authenticateTeacher, (req, res) => {
+  const { courseId } = req.params;
+  
+  db.get('SELECT * FROM courses WHERE id = ? AND teacher_id = ?', 
+    [courseId, req.teacherId], 
+    (err, course) => {
+      if (!course) return res.status(403).json({ error: 'Unauthorized' });
+      
+      db.get('SELECT COUNT(*) as count FROM tests WHERE course_id = ?', 
+        [courseId], 
+        (err, result) => {
+          if (result.count > 0) {
+            return res.status(400).json({ 
+              error: 'Cannot delete course with existing tests. Delete tests first.' 
+            });
+          }
+          
+          db.run('DELETE FROM courses WHERE id = ?', [courseId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+          });
+        }
+      );
+    }
+  );
+});
+
 // Add Timing
 app.post('/api/teacher/timings', authenticateTeacher, (req, res) => {
   const { timing } = req.body;
@@ -211,6 +272,34 @@ app.post('/api/teacher/timings', authenticateTeacher, (req, res) => {
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: this.lastID });
+    }
+  );
+});
+
+// Delete Timing
+app.delete('/api/teacher/timings/:timingId', authenticateTeacher, (req, res) => {
+  const { timingId } = req.params;
+  
+  db.get('SELECT * FROM timings WHERE id = ? AND teacher_id = ?', 
+    [timingId, req.teacherId], 
+    (err, timing) => {
+      if (!timing) return res.status(403).json({ error: 'Unauthorized' });
+      
+      db.get('SELECT COUNT(*) as count FROM tests WHERE timing_id = ?', 
+        [timingId], 
+        (err, result) => {
+          if (result.count > 0) {
+            return res.status(400).json({ 
+              error: 'Cannot delete timing with existing tests. Delete tests first.' 
+            });
+          }
+          
+          db.run('DELETE FROM timings WHERE id = ?', [timingId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+          });
+        }
+      );
     }
   );
 });
@@ -225,6 +314,25 @@ app.post('/api/teacher/tests', authenticateTeacher, (req, res) => {
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, testId: this.lastID });
+    }
+  );
+});
+
+// Delete Test
+app.delete('/api/teacher/tests/:testId', authenticateTeacher, (req, res) => {
+  const { testId } = req.params;
+  
+  db.get('SELECT * FROM tests WHERE id = ? AND teacher_id = ?', 
+    [testId, req.teacherId], 
+    (err, test) => {
+      if (!test) return res.status(403).json({ error: 'Unauthorized' });
+      
+      db.run('DELETE FROM questions WHERE test_id = ?', [testId], (err) => {
+        db.run('DELETE FROM tests WHERE id = ?', [testId], function(err) {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({ success: true });
+        });
+      });
     }
   );
 });
