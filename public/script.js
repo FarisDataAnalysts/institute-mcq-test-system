@@ -114,27 +114,57 @@ function studentLogin(event) {
 function teacherLogin(event) {
     event.preventDefault();
     
-    const username = document.getElementById('teacherUsername').value;
+    const username = document.getElementById('teacherUsername').value.trim();
     const password = document.getElementById('teacherPassword').value;
+    
+    // Basic validation
+    if (!username || !password) {
+        alert('Please enter both username and password');
+        return;
+    }
+    
+    // Disable button to prevent double submission
+    const loginBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = loginBtn.textContent;
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Logging in...';
     
     fetch('/api/teacher/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
     })
-    .then(res => res.json())
+    .then(response => {
+        // Check if response is ok
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Login failed');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
-        if (data.success) {
+        if (data.success && data.token) {
+            // Store token and name
             localStorage.setItem('teacherToken', data.token);
-            localStorage.setItem('teacherName', data.teacher.name);
+            localStorage.setItem('teacherName', data.name || 'Teacher');
+            
+            // Show success message
+            alert('Login successful! Redirecting...');
+            
+            // Redirect to teacher dashboard
             window.location.href = 'teacher.html';
         } else {
-            alert('Invalid credentials');
+            throw new Error(data.error || 'Invalid credentials');
         }
     })
     .catch(err => {
-        console.error('Error:', err);
-        alert('Error: ' + err.message);
+        console.error('Login error:', err);
+        alert(err.message || 'Login failed. Please check your credentials and try again.');
+        
+        // Re-enable button
+        loginBtn.disabled = false;
+        loginBtn.textContent = originalText;
     });
 }
 
