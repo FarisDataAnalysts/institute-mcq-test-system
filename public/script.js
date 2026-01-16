@@ -2,7 +2,7 @@ let currentLanguage = 'en';
 let studentData = {};
 
 // Language Translation
-function changeLanguage(lang) {
+function changeLanguage(lang, event) {
     currentLanguage = lang;
     document.querySelectorAll('[data-en]').forEach(el => {
         el.textContent = el.getAttribute(`data-${lang}`);
@@ -12,7 +12,16 @@ function changeLanguage(lang) {
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        // Fallback: find button by language
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            if (btn.textContent.includes(lang === 'en' ? 'English' : 'اردو')) {
+                btn.classList.add('active');
+            }
+        });
+    }
 }
 
 // Load student options
