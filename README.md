@@ -1,12 +1,22 @@
-# 🎓 Institute MCQ Test System
+# 🎓 Institute MCQ Test System with FREE AI 🤖
 
-A complete web-based Multiple Choice Question (MCQ) test management system for educational institutes. Teachers can create tests, manage questions, and view results. Students can take timed tests with anti-cheat features.
+A complete web-based Multiple Choice Question (MCQ) test management system for educational institutes with **FREE AI-powered question generation**. Teachers can create tests, generate questions using AI, manage content, and view results. Students can take timed tests with anti-cheat features.
 
-**بالکل آسان MCQ ٹیسٹ سسٹم - اساتذہ اور طلباء کے لیے**
+**بالکل آسان MCQ ٹیسٹ سسٹم - اساتذہ اور طلباء کے لیے - مفت AI کے ساتھ!**
 
 ---
 
 ## ✨ Features
+
+### 🤖 **NEW: AI Question Generator (100% FREE!)**
+- ✅ **Auto-Generate Questions** - AI creates MCQs from any topic
+- ✅ **Google Gemini Powered** - Latest AI technology
+- ✅ **Completely FREE** - No credit card needed
+- ✅ **Unlimited Questions** - Generate as many as you want
+- ✅ **Smart & Accurate** - High-quality educational questions
+- ✅ **Multiple Difficulty Levels** - Easy, Medium, Hard
+- ✅ **Any Subject** - Science, Math, History, anything!
+- ✅ **Instant Save** - Questions auto-save to your test
 
 ### 👨‍🏫 **Teacher Dashboard**
 - ✅ **Easy Registration** - No PowerShell or technical knowledge needed
@@ -14,6 +24,7 @@ A complete web-based Multiple Choice Question (MCQ) test management system for e
 - ✅ **Timing Management** - Add/Delete class timings
 - ✅ **Test Creation** - Create tests with unlock dates
 - ✅ **Question Bank** - Add/Delete unlimited questions
+- ✅ **Manual + AI Questions** - Mix both for best results
 - ✅ **Results Dashboard** - View student performance
 - ✅ **Excel Export** - Download results as CSV
 - ✅ **Multi-Teacher Support** - Complete data isolation
@@ -22,7 +33,7 @@ A complete web-based Multiple Choice Question (MCQ) test management system for e
 ### 👨‍🎓 **Student Portal**
 - ✅ **Simple Login** - Student ID + Name
 - ✅ **Course Selection** - Choose course, timing, month
-- ✅ **Timed Tests** - 30-minute countdown timer
+- ✅ **Timed Tests** - Configurable countdown timer
 - ✅ **Full-Screen Mode** - Minimize distractions
 - ✅ **Anti-Cheat** - Tab switch detection
 - ✅ **Progress Tracking** - See answered questions
@@ -31,7 +42,7 @@ A complete web-based Multiple Choice Question (MCQ) test management system for e
 
 ---
 
-## 🚀 Quick Start (3 Steps!)
+## 🚀 Quick Start (4 Steps!)
 
 ### **Step 1: Download**
 ```bash
@@ -46,7 +57,27 @@ https://github.com/FarisDataAnalysts/institute-mcq-test-system/archive/refs/head
 - Install LTS version
 - Restart computer
 
-### **Step 3: Start Server**
+### **Step 3: Setup AI (Optional but Recommended - 100% FREE!)**
+
+**Quick Setup (Windows):**
+```batch
+# Double-click this file:
+SETUP_AI_QUICK.bat
+```
+
+**Manual Setup:**
+1. Get FREE API key: https://makersuite.google.com/app/apikey
+2. Create `.env` file in project folder
+3. Add this:
+```env
+GEMINI_API_KEY=your_api_key_here
+PORT=3000
+JWT_SECRET=your-secret-key
+```
+
+**Detailed Guide:** See [SETUP_AI.md](SETUP_AI.md)
+
+### **Step 4: Start Server**
 
 **Windows (Easy Way):**
 ```batch
@@ -66,12 +97,46 @@ npm install
 npm start
 ```
 
-### **Step 4: Open Browser**
+### **Step 5: Open Browser**
 ```
 http://localhost:3000
 ```
 
 **Done! 🎉**
+
+**Look for:** `🤖 AI Features: ENABLED ✅` in console
+
+---
+
+## 🤖 Using AI Question Generator
+
+### **Quick Guide:**
+
+1. **Login** as teacher
+2. Go to **Questions** tab
+3. **Select a test** from dropdown
+4. In **AI Question Generator** section:
+   - **Topic:** Enter topic (e.g., "Photosynthesis")
+   - **Difficulty:** Choose Easy/Medium/Hard
+   - **Count:** How many questions (1-20)
+5. Click **"🤖 Generate Questions with AI"**
+6. Wait 5-10 seconds
+7. **Done!** Questions auto-saved! ✅
+
+### **Example Topics:**
+- Science: "Photosynthesis", "Newton's Laws", "Chemical Reactions"
+- Math: "Algebra Basics", "Geometry", "Trigonometry"
+- History: "World War 2", "Ancient Egypt", "Industrial Revolution"
+- Computer: "Programming Basics", "Data Structures", "Web Development"
+
+### **Pro Tips:**
+- ✅ Be specific: "Photosynthesis in plants" > "Biology"
+- ✅ Use English topics for best results
+- ✅ Start with 5 questions, then increase
+- ✅ Review AI questions before test
+- ✅ Mix AI + Manual questions
+
+**Full Guide:** [SETUP_AI.md](SETUP_AI.md)
 
 ---
 
@@ -114,8 +179,9 @@ netsh advfirewall firewall add rule name="MCQ System" dir=in action=allow protoc
 
 **Main Server Computer:**
 1. Install system (ZIP + npm install)
-2. Run `START.bat`
-3. Note IP address (`GET_IP.bat`)
+2. Setup AI (optional - FREE!)
+3. Run `START.bat`
+4. Note IP address (`GET_IP.bat`)
 
 **Other Teachers:**
 1. Open browser
@@ -123,12 +189,14 @@ netsh advfirewall firewall add rule name="MCQ System" dir=in action=allow protoc
 3. Click "Register new teacher account"
 4. Create account
 5. Login and use!
+6. **AI works for everyone!** 🤖
 
 **Benefits:**
 - ✅ One installation
 - ✅ Everyone accesses via network
 - ✅ Centralized data
 - ✅ Easy management
+- ✅ Shared AI features
 
 ### **Option 2: USB Portable**
 
@@ -138,6 +206,7 @@ See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 
 ## 📚 Documentation
 
+- **[SETUP_AI.md](SETUP_AI.md)** - AI setup guide (Urdu + English)
 - **[SIMPLE_SETUP_GUIDE.md](SIMPLE_SETUP_GUIDE.md)** - Non-technical setup guide
 - **[USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)** - Deployment options
 - **[MULTI_TEACHER_GUIDE.md](MULTI_TEACHER_GUIDE.md)** - Multi-teacher setup
@@ -165,14 +234,26 @@ See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 4. **Create Test:**
    - Tests tab
    - Select course, timing, month
+   - Set duration (default 30 min)
    - Leave unlock dates blank (or set dates)
    - Create Test
 
-5. **Add Questions:**
+5. **Add Questions (2 Ways):**
+
+   **Option A: AI Generator (Recommended)** 🤖
    - Questions tab
    - Select test
-   - Add minimum 10 questions
+   - Enter topic in AI section
+   - Choose difficulty
+   - Set count (1-20)
+   - Click "Generate with AI"
+   - Review and done!
+
+   **Option B: Manual Entry**
+   - Questions tab
+   - Select test
    - Fill question, options, correct answer
+   - Add Question
 
 6. **View Results:**
    - Results tab
@@ -195,7 +276,7 @@ See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 3. **Take Test:**
    - Click "Start Test"
    - Full-screen mode
-   - 30-minute timer
+   - Timed countdown
    - Answer questions
    - Submit
 
@@ -211,12 +292,12 @@ See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 ### **Tech Stack:**
 - **Backend:** Node.js + Express
 - **Database:** SQLite3
+- **AI:** Google Gemini Pro (FREE)
 - **Frontend:** Vanilla JavaScript
 - **Authentication:** JWT
 - **Styling:** Custom CSS
 
 ### **Database Schema:**
-- Organizations
 - Teachers
 - Courses
 - Timings
@@ -230,6 +311,14 @@ See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 - SQL injection prevention
 - XSS protection
 - CSRF protection
+- Environment variables
+
+### **AI Features:**
+- Google Generative AI SDK
+- Gemini Pro model
+- JSON response parsing
+- Auto-validation
+- Error handling
 
 ---
 
@@ -239,215 +328,141 @@ See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 mcq-system/
 ├── public/
 │   ├── index.html              # Home page
-│   ├── teacher.html            # Teacher dashboard
+│   ├── teacher.html            # Teacher dashboard (with AI)
 │   ├── student.html            # Student test page
 │   ├── register.html           # Teacher registration
 │   ├── style.css               # Styles
 │   ├── script.js               # Main JS
-│   ├── teacher-script.js       # Teacher JS
+│   ├── teacher-script.js       # Teacher JS (AI integration)
 │   └── student-script.js       # Student JS
-├── server.js                   # Express server
+├── data/
+│   └── database.db             # SQLite database
+├── server.js                   # Express server (AI endpoints)
 ├── package.json                # Dependencies
-├── database.db                 # SQLite database (auto-created)
-├── START.bat                   # Windows launcher
-├── GET_IP.bat                  # IP address tool
-├── OPEN_BROWSER.bat            # Browser opener
-└── README.md                   # This file
+├── .env                        # Environment variables (API keys)
+├── .env.example                # Example env file
+├── START.bat                   # Quick start (Windows)
+├── SETUP_AI_QUICK.bat          # AI setup (Windows)
+├── GET_IP.bat                  # Get IP address
+├── README.md                   # This file
+└── SETUP_AI.md                 # AI setup guide
 ```
 
 ---
 
-## 🌐 Deployment Options
+## 🆓 AI Pricing & Limits
 
-### **1. Local Network (School/Institute):**
-- Install on one computer
-- Share IP with students/teachers
-- Same WiFi required
+### **Google Gemini FREE Tier:**
+- ✅ **60 requests per minute**
+- ✅ **1,500 requests per day**
+- ✅ **1 million tokens per month**
 
-### **2. USB Portable:**
-- Copy to USB drive
-- Run from USB
-- No installation needed
-- See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
+**Translation:** Generate **THOUSANDS** of questions daily - **100% FREE!** 🎉
 
-### **3. Cloud Hosting (Internet):**
+**No credit card. No payment. Forever free!**
 
-**Railway.app (Free):**
+---
+
+## 🎓 Example Use Cases
+
+### **Scenario 1: Quick Test Creation**
+1. Create test for "Physics - Month 1"
+2. Use AI: Topic "Newton's Laws", Medium, 10 questions
+3. Review questions
+4. Test ready in 2 minutes! ⚡
+
+### **Scenario 2: Mixed Questions**
+1. Generate 15 AI questions (Easy)
+2. Add 5 manual questions (Hard)
+3. Total: 20 balanced questions
+4. Best of both worlds! 🎯
+
+### **Scenario 3: Multiple Topics**
+1. Generate 5 questions: "Photosynthesis"
+2. Generate 5 questions: "Respiration"
+3. Generate 5 questions: "Cell Structure"
+4. Complete Biology test! 📚
+
+---
+
+## ⚠️ Troubleshooting
+
+### **AI Not Working?**
+
+**Check 1: API Key**
 ```bash
-# 1. Push to GitHub
-# 2. Connect Railway to GitHub
-# 3. Deploy automatically
-# URL: https://your-app.railway.app
+# Open .env file
+# Verify GEMINI_API_KEY is set
 ```
 
-**Render.com (Free):**
-```bash
-# 1. Push to GitHub
-# 2. Create new Web Service
-# 3. Connect repository
-# URL: https://your-app.onrender.com
+**Check 2: Console Message**
+```
+Look for: 🤖 AI Features: ENABLED ✅
+If DISABLED: Check .env file
 ```
 
-**VPS (DigitalOcean, AWS, etc.):**
-```bash
-# 1. SSH to server
-# 2. Clone repository
-# 3. npm install
-# 4. npm start
-# 5. Setup domain + SSL
-```
+**Check 3: Internet**
+- AI needs internet connection
+- Check firewall settings
+
+**Check 4: API Key Valid**
+- Get new key: https://makersuite.google.com/app/apikey
+- Update .env
+- Restart server
+
+### **Other Issues:**
+
+See: [TROUBLESHOOTING_DATABASE.md](TROUBLESHOOTING_DATABASE.md)
 
 ---
 
-## 🔒 Security Best Practices
+## 🌟 What's New in v2.0
 
-### **Production Deployment:**
-
-1. **Change JWT Secret:**
-   ```javascript
-   // In server.js
-   const JWT_SECRET = 'your-super-secret-key-here';
-   ```
-
-2. **Use Environment Variables:**
-   ```bash
-   # Create .env file
-   JWT_SECRET=your-secret-key
-   PORT=3000
-   NODE_ENV=production
-   ```
-
-3. **Enable HTTPS:**
-   - Use reverse proxy (Nginx)
-   - SSL certificate (Let's Encrypt)
-
-4. **Database Backup:**
-   ```bash
-   # Backup database.db regularly
-   cp database.db database_backup_$(date +%Y%m%d).db
-   ```
-
-5. **Firewall Rules:**
-   - Allow only port 3000
-   - Block direct database access
+- 🤖 **FREE AI Question Generator** (Google Gemini)
+- ✅ Improved registration validation
+- ✅ Flexible question limits (min 1 question)
+- ✅ Better error handling
+- ✅ Enhanced UI for AI features
+- ✅ Environment variables support
+- ✅ Quick setup scripts
 
 ---
 
-## 🐛 Troubleshooting
+## 📞 Support
 
-### **Problem: npm is not recognized**
-**Solution:** Install Node.js from https://nodejs.org
+**Issues?**
+- Check [SETUP_AI.md](SETUP_AI.md)
+- Check [TROUBLESHOOTING_DATABASE.md](TROUBLESHOOTING_DATABASE.md)
+- Create GitHub issue
 
-### **Problem: Port 3000 already in use**
-**Solution:**
-```bash
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <NUMBER> /F
-
-# Mac/Linux
-lsof -ti:3000 | xargs kill
-```
-
-### **Problem: Test not showing for students**
-**Solution:**
-1. Add minimum 10 questions
-2. Check unlock dates (leave blank or set to today)
-3. Verify course/timing/month match
-
-### **Problem: Cannot access from other computers**
-**Solution:**
-1. Check same WiFi network
-2. Verify IP address (GET_IP.bat)
-3. Allow firewall (see above)
-4. Restart server
-
----
-
-## 📊 Demo Credentials
-
-**Teacher Login:**
-- Username: `teacher1`
-- Password: `teacher123`
-
-**Create New Teacher:**
-- Home page → Teacher Portal
-- Click "Register new teacher account"
-
----
-
-## 🎯 Roadmap
-
-- [ ] Question import from Excel
-- [ ] Bulk question upload
-- [ ] Question categories/tags
-- [ ] Random question selection
-- [ ] Negative marking option
-- [ ] Student performance analytics
-- [ ] Email notifications
-- [ ] SMS integration
-- [ ] Mobile app (React Native)
-- [ ] Advanced reporting
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Open Pull Request
+**Questions?**
+- Read documentation
+- Check examples
+- Ask in issues
 
 ---
 
 ## 📄 License
 
-MIT License - Free to use, modify, and distribute.
+MIT License - Free to use, modify, and distribute!
 
 ---
 
-## 👨‍💻 Author
+## 🎉 Credits
 
-**Faris - Data Analyst**
-- Email: thepersonalityschool43@gmail.com
-- GitHub: [@FarisDataAnalysts](https://github.com/FarisDataAnalysts)
-
----
-
-## 🙏 Support
-
-If you find this helpful:
-- ⭐ Star the repository
-- 🐛 Report bugs
-- 💡 Suggest features
-- 📢 Share with others
+- **AI:** Google Gemini Pro
+- **Framework:** Node.js + Express
+- **Database:** SQLite3
+- **Made with ❤️ for Education**
 
 ---
 
-## 📞 Contact
+## 🚀 Get Started Now!
 
-**Issues/Questions:**
-- GitHub Issues: [Create Issue](https://github.com/FarisDataAnalysts/institute-mcq-test-system/issues)
-- Email: thepersonalityschool43@gmail.com
+1. **Download** the ZIP
+2. **Install** Node.js
+3. **Setup AI** (5 minutes - FREE!)
+4. **Run** START.bat
+5. **Create** amazing tests with AI! 🤖✨
 
----
-
-**Made with ❤️ for Education | تعلیم کے لیے محبت سے بنایا گیا**
-
----
-
-## 🎉 Quick Links
-
-- [Download ZIP](https://github.com/FarisDataAnalysts/institute-mcq-test-system/archive/refs/heads/main.zip)
-- [Simple Setup Guide](SIMPLE_SETUP_GUIDE.md)
-- [USB & Network Guide](USB_AND_NETWORK_GUIDE.md)
-- [Multi-Teacher Guide](MULTI_TEACHER_GUIDE.md)
-- [Report Issue](https://github.com/FarisDataAnalysts/institute-mcq-test-system/issues)
-
----
-
-**Version:** 1.0.0  
-**Last Updated:** January 2026
+**Happy Teaching! 👨‍🏫📚**
