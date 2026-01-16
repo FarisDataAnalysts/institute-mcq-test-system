@@ -36,6 +36,7 @@
             border-radius: 8px;
             font-size: 16px;
             transition: border 0.3s;
+            box-sizing: border-box;
         }
         .form-group input:focus {
             outline: none;
@@ -56,6 +57,11 @@
         .register-btn:hover {
             background: #5568d3;
             transform: translateY(-2px);
+        }
+        .register-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
         .login-link {
             text-align: center;
@@ -86,6 +92,11 @@
             margin-bottom: 15px;
             display: none;
         }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -96,26 +107,28 @@
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
             
-            <form onsubmit="register(event)">
+            <form id="registerForm" onsubmit="register(event)">
                 <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="name" placeholder="e.g., Mr. Khan" required>
+                    <label>Full Name *</label>
+                    <input type="text" id="name" placeholder="e.g., Mr. Ahmed Khan" required>
+                    <div class="help-text">Your full name as it will appear in the system</div>
                 </div>
                 <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" placeholder="e.g., teacher2" required minlength="3">
-                    <small style="color: #666;">Minimum 3 characters</small>
+                    <label>Username *</label>
+                    <input type="text" id="username" placeholder="e.g., teacher2" required minlength="3" maxlength="20">
+                    <div class="help-text">Minimum 3 characters, letters and numbers only</div>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
+                    <label>Password *</label>
                     <input type="password" id="password" placeholder="Minimum 6 characters" required minlength="6">
-                    <small style="color: #666;">Minimum 6 characters</small>
+                    <div class="help-text">Minimum 6 characters</div>
                 </div>
                 <div class="form-group">
-                    <label>Confirm Password</label>
+                    <label>Confirm Password *</label>
                     <input type="password" id="confirmPassword" placeholder="Re-enter password" required minlength="6">
+                    <div class="help-text">Must match the password above</div>
                 </div>
-                <button type="submit" class="register-btn">Register</button>
+                <button type="submit" class="register-btn" id="registerBtn">Register</button>
             </form>
             
             <p class="login-link">
@@ -127,8 +140,12 @@
     <script>
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            successDiv.style.display = 'none';
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            
             setTimeout(() => {
                 errorDiv.style.display = 'none';
             }, 5000);
@@ -136,65 +153,145 @@
         
         function showSuccess(message) {
             const successDiv = document.getElementById('successMessage');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            errorDiv.style.display = 'none';
             successDiv.textContent = message;
             successDiv.style.display = 'block';
         }
         
-        function register(e) {
-            e.preventDefault();
-            
+        function validateForm() {
             const name = document.getElementById('name').value.trim();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
-            // Validation
-            if (password !== confirmPassword) {
-                showError('Passwords do not match!');
-                return;
+            // Check if all fields are filled
+            if (!name || !username || !password || !confirmPassword) {
+                showError('All fields are required!');
+                return false;
             }
             
-            if (password.length < 6) {
-                showError('Password must be at least 6 characters!');
-                return;
+            // Check name length
+            if (name.length < 3) {
+                showError('Name must be at least 3 characters!');
+                return false;
             }
             
+            // Check username length
             if (username.length < 3) {
                 showError('Username must be at least 3 characters!');
+                return false;
+            }
+            
+            // Check username format (alphanumeric only)
+            if (!/^[a-zA-Z0-9]+$/.test(username)) {
+                showError('Username can only contain letters and numbers!');
+                return false;
+            }
+            
+            // Check password length
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters!');
+                return false;
+            }
+            
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                showError('Passwords do not match!');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function register(e) {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
                 return;
             }
             
-            const data = { name, username, password };
+            const name = document.getElementById('name').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
             
-            // Disable button
-            const btn = document.querySelector('.register-btn');
+            const data = { 
+                name: name, 
+                username: username, 
+                password: password 
+            };
+            
+            // Disable button and show loading
+            const btn = document.getElementById('registerBtn');
             btn.disabled = true;
             btn.textContent = 'Registering...';
             
+            // Send registration request
             fetch('/api/teacher/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
                 body: JSON.stringify(data)
             })
-            .then(res => res.json())
+            .then(response => {
+                // Check if response is ok
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Registration failed');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showSuccess('✅ Registration successful! Redirecting to login...');
+                    
+                    // Clear form
+                    document.getElementById('registerForm').reset();
+                    
+                    // Redirect after 2 seconds
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 2000);
                 } else {
-                    showError(data.error || 'Registration failed. Please try again.');
-                    btn.disabled = false;
-                    btn.textContent = 'Register';
+                    throw new Error(data.error || 'Registration failed');
                 }
             })
             .catch(err => {
-                showError('Error: ' + err.message);
+                console.error('Registration error:', err);
+                showError(err.message || 'Registration failed. Please try again.');
+                
+                // Re-enable button
                 btn.disabled = false;
                 btn.textContent = 'Register';
             });
         }
+        
+        // Add real-time password match validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.style.borderColor = '#e74c3c';
+            } else {
+                this.style.borderColor = '#ddd';
+            }
+        });
+        
+        // Add real-time username validation
+        document.getElementById('username').addEventListener('input', function() {
+            const username = this.value;
+            
+            if (username && !/^[a-zA-Z0-9]+$/.test(username)) {
+                this.style.borderColor = '#e74c3c';
+            } else {
+                this.style.borderColor = '#ddd';
+            }
+        });
     </script>
 </body>
 </html>
