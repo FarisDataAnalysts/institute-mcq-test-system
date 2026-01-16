@@ -377,11 +377,11 @@ function renderQuestions() {
     const list = document.getElementById('questionsList');
     
     if (allQuestions.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h3>No questions yet</h3><p>Add questions using the form above (minimum 10 required)</p></div>';
+        list.innerHTML = '<div class="empty-state"><h3>No questions yet</h3><p>Add questions using the form above (at least 1 required)</p></div>';
         return;
     }
     
-    let html = `<p><strong>Total Questions: ${allQuestions.length}</strong> ${allQuestions.length < 10 ? '(Minimum 10 required)' : '✅'}</p>`;
+    let html = `<p><strong>Total Questions: ${allQuestions.length}</strong> ✅</p>`;
     html += '<table><tr><th>#</th><th>Question</th><th>Correct Answer</th><th>Actions</th></tr>';
     
     allQuestions.forEach((q, index) => {
@@ -533,13 +533,22 @@ function exportResults() {
 // ========== RESET DASHBOARD ==========
 
 function resetDashboard() {
-    const confirmation = confirm('⚠️ WARNING: This will DELETE ALL your data including:\n\n• All Courses\n• All Timings\n• All Tests\n• All Questions\n• All Student Results\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to continue?');
+    const confirmation = confirm('⚠️ WARNING: This will DELETE ALL STUDENT RESULTS!\n\n' +
+        'This will KEEP:\n' +
+        '✅ All Courses\n' +
+        '✅ All Timings\n' +
+        '✅ All Tests\n' +
+        '✅ All Questions\n\n' +
+        'This will DELETE:\n' +
+        '❌ All Student Test Results\n\n' +
+        'Use this to start a new session with the same tests.\n\n' +
+        'Are you sure you want to continue?');
     
     if (!confirmation) return;
     
-    const doubleCheck = prompt('Type "DELETE" to confirm (all caps):');
+    const doubleCheck = prompt('Type "RESET" to confirm (all caps):');
     
-    if (doubleCheck !== 'DELETE') {
+    if (doubleCheck !== 'RESET') {
         alert('Reset cancelled. Your data is safe.');
         return;
     }
@@ -551,7 +560,7 @@ function resetDashboard() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Dashboard reset successfully! Starting fresh...');
+            alert(`✅ Student results cleared successfully!\n\n${data.deleted_results} result(s) deleted.\n\nYour courses, tests, and questions are preserved.`);
             loadDashboard();
         } else {
             alert('Error resetting dashboard');
