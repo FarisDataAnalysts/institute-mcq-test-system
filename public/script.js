@@ -93,10 +93,7 @@ function studentLogin(event) {
     .then(res => res.json())
     .then(data => {
         if (data.available) {
-            if (data.test.question_count < 10) {
-                alert('Test is not ready yet. Please contact your teacher.');
-                return;
-            }
+            // Allow test with any number of questions (removed minimum 10 check)
             localStorage.setItem('studentData', JSON.stringify(studentData));
             localStorage.setItem('testData', JSON.stringify(data.test));
             window.location.href = 'test.html';
