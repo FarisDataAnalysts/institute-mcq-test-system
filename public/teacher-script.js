@@ -131,8 +131,36 @@ function renderCourses() {
     dashboardData.courses.forEach(course => {
         const item = document.createElement('div');
         item.className = 'list-item';
-        item.innerHTML = `<strong>📚 ${course.name}</strong>`;
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.innerHTML = `
+            <strong>📚 ${course.name}</strong>
+            <button class="btn btn-danger" onclick="deleteCourse(${course.id})">Delete</button>
+        `;
         list.appendChild(item);
+    });
+}
+
+function deleteCourse(id) {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+    
+    fetch(`/api/teacher/courses/${id}`, {
+        method: 'DELETE',
+        headers
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Course deleted successfully!');
+            loadDashboard();
+        } else {
+            alert('Error: ' + (data.error || 'Cannot delete course'));
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error deleting course');
     });
 }
 
@@ -178,8 +206,36 @@ function renderTimings() {
     dashboardData.timings.forEach(timing => {
         const item = document.createElement('div');
         item.className = 'list-item';
-        item.innerHTML = `<strong>🕐 ${timing.timing}</strong>`;
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.innerHTML = `
+            <strong>🕐 ${timing.timing}</strong>
+            <button class="btn btn-danger" onclick="deleteTiming(${timing.id})">Delete</button>
+        `;
         list.appendChild(item);
+    });
+}
+
+function deleteTiming(id) {
+    if (!confirm('Are you sure you want to delete this timing?')) return;
+    
+    fetch(`/api/teacher/timings/${id}`, {
+        method: 'DELETE',
+        headers
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Timing deleted successfully!');
+            loadDashboard();
+        } else {
+            alert('Error: ' + (data.error || 'Cannot delete timing'));
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error deleting timing');
     });
 }
 
@@ -237,7 +293,7 @@ function renderTests() {
         return;
     }
     
-    let html = '<table><tr><th>Course</th><th>Timing</th><th>Month</th><th>Unlock Period</th><th>Duration</th><th>Questions</th></tr>';
+    let html = '<table><tr><th>Course</th><th>Timing</th><th>Month</th><th>Unlock Period</th><th>Duration</th><th>Actions</th></tr>';
     
     dashboardData.tests.forEach(test => {
         html += `
@@ -247,7 +303,10 @@ function renderTests() {
                 <td>Month ${test.month}</td>
                 <td>${test.unlock_start || 'Not set'} to ${test.unlock_end || 'Not set'}</td>
                 <td>${test.duration_minutes || 30} min</td>
-                <td><button class="btn" onclick="viewTestQuestions(${test.id})">View Questions</button></td>
+                <td>
+                    <button class="btn" onclick="viewTestQuestions(${test.id})">Questions</button>
+                    <button class="btn btn-danger" onclick="deleteTest(${test.id})">Delete</button>
+                </td>
             </tr>
         `;
     });
@@ -259,7 +318,34 @@ function renderTests() {
 function viewTestQuestions(testId) {
     document.getElementById('questionTestSelect').value = testId;
     showTab('questions');
+    // Manually trigger tab change
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelector('.tab:nth-child(4)').classList.add('active');
+    document.getElementById('questions').classList.add('active');
     loadQuestions();
+}
+
+function deleteTest(id) {
+    if (!confirm('Are you sure? This will delete the test and all its questions!')) return;
+    
+    fetch(`/api/teacher/tests/${id}`, {
+        method: 'DELETE',
+        headers
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Test deleted successfully!');
+            loadDashboard();
+        } else {
+            alert('Error: ' + (data.error || 'Cannot delete test'));
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error deleting test');
+    });
 }
 
 // ========== QUESTIONS ==========
