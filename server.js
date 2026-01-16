@@ -8,7 +8,8 @@ require('dotenv').config();
 
 // Google Gemini AI Setup
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyDGVJriOXSD-Zy-bLPKe-Zy8xQZ9Z9Z9Z9');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -172,19 +173,45 @@ app.post('/api/teacher/register', async (req, res) => {
   }
 });
 
-// Teacher Login
+// Teacher Login - FIXED
 app.post('/api/teacher/login', (req, res) => {
   const { username, password } = req.body;
   
+  console.log('Login attempt:', username); // Debug log
+  
   db.get('SELECT * FROM teachers WHERE username = ?', [username], async (err, teacher) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!teacher) return res.status(401).json({ error: 'Invalid credentials' });
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: err.message });
+    }
     
-    const validPassword = await bcrypt.compare(password, teacher.password);
-    if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!teacher) {
+      console.log('Teacher not found:', username);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     
-    const token = jwt.sign({ id: teacher.id, username: teacher.username }, JWT_SECRET);
-    res.json({ token, name: teacher.name });
+    try {
+      const validPassword = await bcrypt.compare(password, teacher.password);
+      
+      if (!validPassword) {
+        console.log('Invalid password for:', username);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      const token = jwt.sign({ id: teacher.id, username: teacher.username }, JWT_SECRET);
+      
+      console.log('Login successful:', username);
+      
+      // FIXED: Added success: true
+      res.json({ 
+        success: true,
+        token: token, 
+        name: teacher.name 
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({ error: 'Login failed' });
+    }
   });
 });
 
@@ -292,14 +319,14 @@ app.delete('/api/teacher/timings/:id', authenticateToken, (req, res) => {
   );
 });
 
-// Add Test
+// Create Test
 app.post('/api/teacher/tests', authenticateToken, (req, res) => {
   const { course_id, timing_id, month, unlock_start, unlock_end, duration_minutes } = req.body;
   const teacherId = req.user.id;
   
   db.run(`INSERT INTO tests (teacher_id, course_id, timing_id, month, unlock_start, unlock_end, duration_minutes) 
           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [teacherId, course_id, timing_id, month, unlock_start, unlock_end, duration_minutes || 30],
+    [teacherId, course_id, timing_id, month, unlock_start || null, unlock_end || null, duration_minutes || 30],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: this.lastID });
@@ -310,189 +337,90 @@ app.post('/api/teacher/tests', authenticateToken, (req, res) => {
 // Delete Test
 app.delete('/api/teacher/tests/:id', authenticateToken, (req, res) => {
   const { id } = req.params;
+  const teacherId = req.user.id;
   
-  db.run('DELETE FROM tests WHERE id = ?', [id], function(err) {
+  db.run('DELETE FROM tests WHERE id = ? AND teacher_id = ?', 
+    [id, teacherId], 
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    }
+  );
+});
+
+// Get Questions for a Test
+app.get('/api/teacher/tests/:testId/questions', authenticateToken, (req, res) => {
+  const { testId } = req.params;
+  const teacherId = req.user.id;
+  
+  // Verify test belongs to teacher
+  db.get('SELECT id FROM tests WHERE id = ? AND teacher_id = ?', [testId, teacherId], (err, test) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true });
+    if (!test) return res.status(404).json({ error: 'Test not found' });
+    
+    db.all('SELECT * FROM questions WHERE test_id = ?', [testId], (err, questions) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(questions || []);
+    });
   });
 });
 
 // Add Question
 app.post('/api/teacher/questions', authenticateToken, (req, res) => {
   const { test_id, question_text, option_a, option_b, option_c, option_d, correct_answer } = req.body;
+  const teacherId = req.user.id;
   
-  db.run(`INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
-          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [test_id, question_text, option_a, option_b, option_c, option_d, correct_answer],
-    function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true, id: this.lastID });
-    }
-  );
-});
-
-// ========== AI QUESTION GENERATOR (FREE GEMINI) ==========
-
-app.post('/api/teacher/ai/generate-questions', authenticateToken, async (req, res) => {
-  try {
-    const { topic, difficulty, count, test_id } = req.body;
-    
-    if (!topic || !count) {
-      return res.status(400).json({ error: 'Topic and count are required' });
-    }
-    
-    if (count < 1 || count > 20) {
-      return res.status(400).json({ error: 'Count must be between 1 and 20' });
-    }
-    
-    console.log(`🤖 Generating ${count} ${difficulty} questions about: ${topic}`);
-    
-    // Initialize Gemini model
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    
-    // Create prompt for AI
-    const prompt = `Generate ${count} multiple choice questions (MCQs) about "${topic}" with ${difficulty} difficulty level.
-
-IMPORTANT RULES:
-1. Each question must have exactly 4 options (A, B, C, D)
-2. Only ONE option should be correct
-3. Questions should be clear and educational
-4. Options should be plausible but only one correct
-5. Return ONLY valid JSON, no markdown, no explanations
-
-Return in this EXACT JSON format:
-{
-  "questions": [
-    {
-      "question_text": "What is...",
-      "option_a": "First option",
-      "option_b": "Second option",
-      "option_c": "Third option",
-      "option_d": "Fourth option",
-      "correct_answer": "A"
-    }
-  ]
-}
-
-Generate ${count} questions now:`;
-
-    // Generate content using Gemini
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
-    
-    // Clean up response (remove markdown code blocks if present)
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
-    // Parse JSON
-    let aiData;
-    try {
-      aiData = JSON.parse(text);
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      console.error('Raw AI Response:', text);
-      return res.status(500).json({ 
-        error: 'AI generated invalid format. Please try again.',
-        details: 'Failed to parse AI response'
-      });
-    }
-    
-    if (!aiData.questions || !Array.isArray(aiData.questions)) {
-      return res.status(500).json({ 
-        error: 'AI generated invalid format. Please try again.',
-        details: 'Missing questions array'
-      });
-    }
-    
-    // Validate and save questions
-    const validQuestions = [];
-    for (const q of aiData.questions) {
-      if (q.question_text && q.option_a && q.option_b && q.option_c && q.option_d && q.correct_answer) {
-        validQuestions.push(q);
-      }
-    }
-    
-    if (validQuestions.length === 0) {
-      return res.status(500).json({ 
-        error: 'AI generated invalid questions. Please try again.',
-        details: 'No valid questions found'
-      });
-    }
-    
-    // Save to database if test_id provided
-    if (test_id) {
-      const stmt = db.prepare(`INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?)`);
-      
-      for (const q of validQuestions) {
-        stmt.run(
-          test_id, 
-          q.question_text, 
-          q.option_a, 
-          q.option_b, 
-          q.option_c, 
-          q.option_d, 
-          q.correct_answer.toUpperCase()
-        );
-      }
-      
-      stmt.finalize();
-    }
-    
-    console.log(`✅ Generated ${validQuestions.length} questions successfully!`);
-    
-    res.json({ 
-      success: true, 
-      questions: validQuestions,
-      count: validQuestions.length,
-      message: `Successfully generated ${validQuestions.length} AI-powered questions!`
-    });
-    
-  } catch (error) {
-    console.error('AI generation error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate questions. Please check your API key and try again.',
-      details: error.message 
-    });
-  }
-});
-
-// Get Questions for Test
-app.get('/api/teacher/tests/:id/questions', authenticateToken, (req, res) => {
-  const { id } = req.params;
-  
-  db.all('SELECT * FROM questions WHERE test_id = ?', [id], (err, questions) => {
+  // Verify test belongs to teacher
+  db.get('SELECT id FROM tests WHERE id = ? AND teacher_id = ?', [test_id, teacherId], (err, test) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(questions || []);
+    if (!test) return res.status(404).json({ error: 'Test not found' });
+    
+    db.run(`INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [test_id, question_text, option_a, option_b, option_c, option_d, correct_answer],
+      function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, id: this.lastID });
+      }
+    );
   });
 });
 
 // Delete Question
 app.delete('/api/teacher/questions/:id', authenticateToken, (req, res) => {
   const { id } = req.params;
+  const teacherId = req.user.id;
   
-  db.run('DELETE FROM questions WHERE id = ?', [id], function(err) {
+  // Verify question belongs to teacher's test
+  db.get(`SELECT q.id FROM questions q 
+          JOIN tests t ON q.test_id = t.id 
+          WHERE q.id = ? AND t.teacher_id = ?`, [id, teacherId], (err, question) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ success: true });
+    if (!question) return res.status(404).json({ error: 'Question not found' });
+    
+    db.run('DELETE FROM questions WHERE id = ?', [id], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    });
   });
 });
 
 // Get Results
 app.get('/api/teacher/results', authenticateToken, (req, res) => {
-  const { month } = req.query;
   const teacherId = req.user.id;
+  const { month } = req.query;
   
-  let query = `SELECT sa.*, c.name as course_name, t.timing 
+  let query = `SELECT sa.*, c.name as course_name, tm.timing, t.month
                FROM student_attempts sa
+               JOIN tests t ON sa.test_id = t.id
                JOIN courses c ON sa.course_id = c.id
-               JOIN timings t ON sa.timing_id = t.id
-               JOIN tests ts ON sa.test_id = ts.id
-               WHERE ts.teacher_id = ?`;
+               JOIN timings tm ON sa.timing_id = tm.id
+               WHERE t.teacher_id = ?`;
   
   const params = [teacherId];
   
   if (month) {
-    query += ' AND sa.month = ?';
+    query += ' AND t.month = ?';
     params.push(month);
   }
   
@@ -504,22 +432,25 @@ app.get('/api/teacher/results', authenticateToken, (req, res) => {
   });
 });
 
-// Export Results to CSV
+// Export Results as CSV
 app.get('/api/teacher/results/export', authenticateToken, (req, res) => {
-  const { month } = req.query;
   const teacherId = req.user.id;
+  const { month } = req.query;
   
-  let query = `SELECT sa.*, c.name as course_name, t.timing 
+  let query = `SELECT sa.student_id, sa.student_name, c.name as course, tm.timing, 
+               t.month, sa.score, sa.total_questions, 
+               ROUND((sa.score * 100.0 / sa.total_questions), 2) as percentage,
+               sa.completed_at
                FROM student_attempts sa
+               JOIN tests t ON sa.test_id = t.id
                JOIN courses c ON sa.course_id = c.id
-               JOIN timings t ON sa.timing_id = t.id
-               JOIN tests ts ON sa.test_id = ts.id
-               WHERE ts.teacher_id = ?`;
+               JOIN timings tm ON sa.timing_id = tm.id
+               WHERE t.teacher_id = ?`;
   
   const params = [teacherId];
   
   if (month) {
-    query += ' AND sa.month = ?';
+    query += ' AND t.month = ?';
     params.push(month);
   }
   
@@ -529,23 +460,22 @@ app.get('/api/teacher/results/export', authenticateToken, (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     
     // Create CSV
-    let csv = 'Student ID,Name,Course,Timing,Month,Score,Total,Percentage,Date\n';
+    let csv = 'Student ID,Student Name,Course,Timing,Month,Score,Total Questions,Percentage,Completed At\n';
     results.forEach(r => {
-      const percentage = ((r.score / r.total_questions) * 100).toFixed(2);
-      csv += `${r.student_id},${r.student_name},${r.course_name},${r.timing},${r.month},${r.score},${r.total_questions},${percentage}%,${r.completed_at}\n`;
+      csv += `${r.student_id},${r.student_name},${r.course},${r.timing},${r.month},${r.score},${r.total_questions},${r.percentage}%,${r.completed_at}\n`;
     });
     
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=results_${month || 'all'}.csv`);
+    res.setHeader('Content-Disposition', 'attachment; filename=results.csv');
     res.send(csv);
   });
 });
 
-// Reset Dashboard (Clear student results only)
+// Reset Dashboard (Delete all student results only)
 app.post('/api/teacher/reset', authenticateToken, (req, res) => {
   const teacherId = req.user.id;
   
-  // Delete only student attempts for this teacher's tests
+  // Only delete student attempts for this teacher's tests
   db.run(`DELETE FROM student_attempts 
           WHERE test_id IN (SELECT id FROM tests WHERE teacher_id = ?)`,
     [teacherId],
@@ -553,96 +483,212 @@ app.post('/api/teacher/reset', authenticateToken, (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ 
         success: true, 
-        deleted_results: this.changes,
-        message: 'Student results cleared successfully. Your courses, tests, and questions are preserved.'
+        message: 'All student results have been deleted',
+        deleted: this.changes 
       });
     }
   );
 });
 
-// ========== STUDENT ENDPOINTS ==========
+// ========== AI QUESTION GENERATOR ==========
 
-// Get Available Tests
+app.post('/api/teacher/generate-questions', authenticateToken, async (req, res) => {
+  try {
+    const { test_id, topic, difficulty, count } = req.body;
+    const teacherId = req.user.id;
+    
+    // Check if AI is enabled
+    if (!genAI) {
+      return res.status(503).json({ 
+        error: 'AI features are not enabled. Please add GEMINI_API_KEY to .env file.' 
+      });
+    }
+    
+    // Validate inputs
+    if (!test_id || !topic || !difficulty || !count) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    if (count < 1 || count > 20) {
+      return res.status(400).json({ error: 'Count must be between 1 and 20' });
+    }
+    
+    // Verify test belongs to teacher
+    const test = await new Promise((resolve, reject) => {
+      db.get('SELECT id FROM tests WHERE id = ? AND teacher_id = ?', 
+        [test_id, teacherId], 
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+    
+    if (!test) {
+      return res.status(404).json({ error: 'Test not found' });
+    }
+    
+    // Generate questions using Gemini AI
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `Generate ${count} multiple choice questions about "${topic}" with ${difficulty} difficulty level.
+
+For each question, provide:
+1. Question text
+2. Four options (A, B, C, D)
+3. Correct answer (A, B, C, or D)
+
+Format the response as a JSON array with this structure:
+[
+  {
+    "question": "Question text here?",
+    "option_a": "First option",
+    "option_b": "Second option",
+    "option_c": "Third option",
+    "option_d": "Fourth option",
+    "correct_answer": "A"
+  }
+]
+
+Make sure:
+- Questions are clear and educational
+- Options are plausible and well-distributed
+- Only one correct answer per question
+- Difficulty matches the ${difficulty} level
+- Questions are relevant to "${topic}"
+
+Return ONLY the JSON array, no additional text.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Parse JSON response
+    let questions;
+    try {
+      // Extract JSON from response (remove markdown code blocks if present)
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        throw new Error('No JSON array found in response');
+      }
+      questions = JSON.parse(jsonMatch[0]);
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', text);
+      return res.status(500).json({ 
+        error: 'Failed to parse AI response. Please try again.' 
+      });
+    }
+    
+    // Validate and insert questions
+    const insertedQuestions = [];
+    for (const q of questions) {
+      if (!q.question || !q.option_a || !q.option_b || !q.option_c || !q.option_d || !q.correct_answer) {
+        continue; // Skip invalid questions
+      }
+      
+      const result = await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [test_id, q.question, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer.toUpperCase()],
+          function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+          }
+        );
+      });
+      
+      insertedQuestions.push({
+        id: result.id,
+        ...q
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      count: insertedQuestions.length,
+      questions: insertedQuestions
+    });
+    
+  } catch (error) {
+    console.error('AI generation error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate questions. Please try again.' 
+    });
+  }
+});
+
+// ========== STUDENT PORTAL ==========
+
+// Get available options for students
+app.get('/api/student/options', (req, res) => {
+  db.all('SELECT DISTINCT id, name FROM courses', (err, courses) => {
+    db.all('SELECT DISTINCT id, timing FROM timings', (err, timings) => {
+      res.json({
+        courses: courses || [],
+        timings: timings || []
+      });
+    });
+  });
+});
+
+// Check if test is available
 app.post('/api/student/tests', (req, res) => {
-  const { student_id, course_id, timing_id, month } = req.body;
+  const { course_id, timing_id, month } = req.body;
   
-  db.all(`SELECT t.*, c.name as course_name, tm.timing 
+  db.get(`SELECT t.*, c.name as course_name, tm.timing 
           FROM tests t 
           JOIN courses c ON t.course_id = c.id 
           JOIN timings tm ON t.timing_id = tm.id 
           WHERE t.course_id = ? AND t.timing_id = ? AND t.month = ?`,
     [course_id, timing_id, month],
-    (err, tests) => {
+    (err, test) => {
       if (err) return res.status(500).json({ error: err.message });
+      if (!test) return res.json({ available: false, message: 'No test found for this selection' });
       
-      // Filter tests based on unlock dates
-      const now = new Date().toISOString().split('T')[0];
-      const availableTests = tests.filter(test => {
-        if (!test.unlock_start && !test.unlock_end) return true;
-        if (test.unlock_start && now < test.unlock_start) return false;
-        if (test.unlock_end && now > test.unlock_end) return false;
-        return true;
-      });
+      // Check unlock dates
+      const now = new Date();
+      if (test.unlock_start && new Date(test.unlock_start) > now) {
+        return res.json({ 
+          available: false, 
+          message: `Test will be available from ${test.unlock_start}` 
+        });
+      }
+      if (test.unlock_end && new Date(test.unlock_end) < now) {
+        return res.json({ 
+          available: false, 
+          message: `Test was available until ${test.unlock_end}` 
+        });
+      }
       
-      // Check if student already attempted
-      const testPromises = availableTests.map(test => {
-        return new Promise((resolve) => {
-          db.get('SELECT id FROM student_attempts WHERE test_id = ? AND student_id = ?',
-            [test.id, student_id],
-            (err, attempt) => {
-              test.attempted = !!attempt;
-              
-              // Check if test has questions
-              db.get('SELECT COUNT(*) as count FROM questions WHERE test_id = ?',
-                [test.id],
-                (err, result) => {
-                  test.has_questions = result && result.count >= 1;
-                  resolve(test);
-                }
-              );
-            }
-          );
+      // Get questions
+      db.all('SELECT * FROM questions WHERE test_id = ?', [test.id], (err, questions) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Allow test with any number of questions (removed minimum check)
+        res.json({ 
+          available: true, 
+          test: {
+            ...test,
+            questions: questions
+          }
         });
       });
-      
-      Promise.all(testPromises).then(testsWithStatus => {
-        res.json(testsWithStatus);
-      });
     }
   );
 });
 
-// Get Test Questions
-app.get('/api/student/test/:id/questions', (req, res) => {
-  const { id } = req.params;
-  
-  db.all(
-    'SELECT id, question_text, option_a, option_b, option_c, option_d FROM questions WHERE test_id = ?',
-    [id],
-    (err, questions) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(questions || []);
-    }
-  );
-});
-
-// Submit Test
-app.post('/api/student/submit-test', (req, res) => {
+// Submit test
+app.post('/api/student/submit', (req, res) => {
   const { test_id, student_id, student_name, course_id, timing_id, month, answers } = req.body;
   
-  // Get correct answers
-  db.all('SELECT id, correct_answer FROM questions WHERE test_id = ?', [test_id], (err, questions) => {
+  // Get questions to calculate score
+  db.all('SELECT * FROM questions WHERE test_id = ?', [test_id], (err, questions) => {
     if (err) return res.status(500).json({ error: err.message });
     
-    // Calculate score
     let score = 0;
-    const questionMap = {};
     questions.forEach(q => {
-      questionMap[q.id] = q.correct_answer;
-    });
-    
-    Object.keys(answers).forEach(qId => {
-      if (answers[qId] === questionMap[qId]) {
+      if (answers[q.id] === q.correct_answer) {
         score++;
       }
     });
@@ -654,9 +700,10 @@ app.post('/api/student/submit-test', (req, res) => {
       [test_id, student_id, student_name, course_id, timing_id, month, score, questions.length, JSON.stringify(answers)],
       function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ 
-          success: true, 
-          score, 
+        
+        res.json({
+          success: true,
+          score: score,
           total: questions.length,
           percentage: ((score / questions.length) * 100).toFixed(2)
         });
@@ -668,5 +715,13 @@ app.post('/api/student/submit-test', (req, res) => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`🤖 AI Features: ${process.env.GEMINI_API_KEY ? 'ENABLED ✅' : 'DISABLED (Add GEMINI_API_KEY to .env)'}`);
+  
+  // Check AI status
+  if (genAI && GEMINI_API_KEY) {
+    console.log('🤖 AI Features: ENABLED ✅');
+  } else {
+    console.log('🤖 AI Features: DISABLED ⚠️');
+    console.log('   To enable AI: Add GEMINI_API_KEY to .env file');
+    console.log('   Get free key: https://makersuite.google.com/app/apikey');
+  }
 });
