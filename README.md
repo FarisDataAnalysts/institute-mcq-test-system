@@ -1,524 +1,453 @@
-# 🎓 Institute MCQ Test System - مکمل آن لائن ٹیسٹ سسٹم
+# 🎓 Institute MCQ Test System
 
-**Complete Online MCQ Test System for Educational Institutes**
+A complete web-based Multiple Choice Question (MCQ) test management system for educational institutes. Teachers can create tests, manage questions, and view results. Students can take timed tests with anti-cheat features.
 
-[![Download](https://img.shields.io/badge/Download-ZIP-green)](https://github.com/FarisDataAnalysts/institute-mcq-test-system/archive/refs/heads/main.zip)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+**بالکل آسان MCQ ٹیسٹ سسٹم - اساتذہ اور طلباء کے لیے**
 
 ---
 
-## 📥 **Download & Setup (اردو میں)**
+## ✨ Features
 
-### **Step 1: Code Download Karo**
+### 👨‍🏫 **Teacher Dashboard**
+- ✅ **Easy Registration** - No PowerShell or technical knowledge needed
+- ✅ **Course Management** - Add/Delete courses
+- ✅ **Timing Management** - Add/Delete class timings
+- ✅ **Test Creation** - Create tests with unlock dates
+- ✅ **Question Bank** - Add/Delete unlimited questions
+- ✅ **Results Dashboard** - View student performance
+- ✅ **Excel Export** - Download results as CSV
+- ✅ **Multi-Teacher Support** - Complete data isolation
+- ✅ **Month-wise Organization** - Filter by month
 
-**Option A: Direct ZIP Download**
-1. [Is link pe click karo](https://github.com/FarisDataAnalysts/institute-mcq-test-system/archive/refs/heads/main.zip) - ZIP download ho jayega
-2. ZIP file ko **Extract** karo (Right-click → Extract All)
-3. Folder ka naam change karo: `mcq-system` (simple naam)
+### 👨‍🎓 **Student Portal**
+- ✅ **Simple Login** - Student ID + Name
+- ✅ **Course Selection** - Choose course, timing, month
+- ✅ **Timed Tests** - 30-minute countdown timer
+- ✅ **Full-Screen Mode** - Minimize distractions
+- ✅ **Anti-Cheat** - Tab switch detection
+- ✅ **Progress Tracking** - See answered questions
+- ✅ **Instant Results** - Score and percentage
+- ✅ **Mobile Friendly** - Works on phones/tablets
 
-**Option B: Git Clone**
+---
+
+## 🚀 Quick Start (3 Steps!)
+
+### **Step 1: Download**
 ```bash
-git clone https://github.com/FarisDataAnalysts/institute-mcq-test-system.git
-cd institute-mcq-test-system
+# Download ZIP
+https://github.com/FarisDataAnalysts/institute-mcq-test-system/archive/refs/heads/main.zip
+
+# Extract to folder
 ```
 
----
+### **Step 2: Install Node.js (One-time)**
+- Download: https://nodejs.org
+- Install LTS version
+- Restart computer
 
-### **Step 2: Node.js Install Karo (Agar nahi hai)**
+### **Step 3: Start Server**
 
-**Check karo installed hai ya nahi:**
-```bash
-node --version
+**Windows (Easy Way):**
+```batch
+# Double-click this file:
+START.bat
 ```
 
-**Agar error aaye toh:**
-1. [Node.js Download karo](https://nodejs.org) - LTS version
-2. Install karo (Next, Next, Install)
-3. Computer restart karo
-
----
-
-### **Step 3: Folder Mein Jao**
-
-**Windows:**
-1. Folder open karo
-2. Address bar pe click karo (top pe)
-3. Type karo: `cmd` aur Enter
-4. Command Prompt open ho jayega
-
-**Mac/Linux:**
+**Windows (Manual):**
 ```bash
-cd path/to/mcq-system
-```
-
----
-
-### **Step 4: Dependencies Install Karo**
-
-**PowerShell/CMD mein type karo:**
-```bash
-cd "C:\Users\YourName\Desktop\mcq-system"
 npm install
-```
-
-**Wait karo 2-3 minutes** - packages install ho rahe hain
-
----
-
-### **Step 5: Server Start Karo**
-
-```bash
 npm start
 ```
 
-**Yeh dikhega:**
-```
-✅ Database connected
-✅ Demo data created
-📝 Demo Login: teacher1 / teacher123
-🚀 Server running on http://localhost:3000
+**Mac/Linux:**
+```bash
+npm install
+npm start
 ```
 
----
-
-### **Step 6: Browser Mein Open Karo**
-
+### **Step 4: Open Browser**
 ```
 http://localhost:3000
 ```
 
-**Demo Login:**
-- Username: `teacher1`
-- Password: `teacher123`
+**Done! 🎉**
 
 ---
 
-## ✨ **Features (خصوصیات)**
+## 📱 Network Access (Share with Students)
 
-### **👨‍🎓 Student Portal (طالب علم پورٹل)**
+### **Get Your IP Address:**
 
-✅ **Login System:**
-- Student ID aur naam se login
-- Course dropdown se select
-- Timing dropdown se select
-- Month select (1-4)
+**Windows:**
+```batch
+# Double-click:
+GET_IP.bat
 
-✅ **Test Features:**
-- 30 minute timer (customizable)
-- 10-20 MCQ questions
-- Full-screen mode (compulsory)
-- Copy/paste disabled
-- Tab switch detection
-- Auto-submit after 2 warnings
-- Progress bar
-- Question navigation
-- Instant results
+# Or manually:
+ipconfig
+# Look for: IPv4 Address (e.g., 192.168.1.100)
+```
 
-✅ **Anti-Cheat:**
-- Copy disabled
-- Paste disabled
-- Right-click disabled
-- Keyboard shortcuts blocked
-- Tab switch warning
-- Fullscreen enforcement
-- Back button disabled
+**Mac/Linux:**
+```bash
+ifconfig | grep "inet "
+```
 
-✅ **Multi-language:**
-- English/Urdu support
-- Translation button (ready for Google Translate API)
+### **Share URL:**
+```
+http://192.168.1.100:3000
+```
+*(Replace with your IP)*
+
+### **Firewall (Windows):**
+```batch
+# Run as Administrator:
+netsh advfirewall firewall add rule name="MCQ System" dir=in action=allow protocol=TCP localport=3000
+```
 
 ---
 
-### **👨‍🏫 Teacher Dashboard (استاد ڈیش بورڈ)**
+## 👥 Multi-Teacher Setup
 
-✅ **Overview Tab:**
-- Total courses count
-- Total tests count
-- Total questions count
-- Students tested count
-- Quick action buttons
+### **Option 1: Single Server (Recommended)**
 
-✅ **Courses & Timings:**
-- Add unlimited courses
-- Add unlimited timings
-- View all courses/timings
-- Simple management
+**Main Server Computer:**
+1. Install system (ZIP + npm install)
+2. Run `START.bat`
+3. Note IP address (`GET_IP.bat`)
 
-✅ **Test Management:**
-- Create tests
-- Select course & timing
-- Assign month (1-4)
-- Set unlock dates
-- Set test duration
-- View all tests
+**Other Teachers:**
+1. Open browser
+2. Go to: `http://SERVER_IP:3000`
+3. Click "Register new teacher account"
+4. Create account
+5. Login and use!
 
-✅ **Question Bank:**
-- Add questions (MCQ format)
-- 4 options (A, B, C, D)
-- Set correct answer
-- Edit questions
-- Delete questions
-- View all questions
-- Minimum 10 questions required
+**Benefits:**
+- ✅ One installation
+- ✅ Everyone accesses via network
+- ✅ Centralized data
+- ✅ Easy management
 
-✅ **Results & Analytics:**
-- View all student results
-- Filter by month
-- Export to Excel/CSV
-- Student-wise performance
-- Pass/fail status
-- Percentage calculation
-- Date/time stamps
+### **Option 2: USB Portable**
+
+See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 
 ---
 
-### **🔐 Data Security (ڈیٹا سیکیورٹی)**
+## 📚 Documentation
 
-✅ **Organization Level:**
-- Each institute has separate data
-- No data mixing between organizations
-
-✅ **Teacher Level:**
-- Each teacher sees only their data
-- Teacher A cannot see Teacher B's questions
-- Complete isolation
-
-✅ **Student Level:**
-- Students only access unlocked tests
-- Cannot see future tests
-- Secure test submission
+- **[SIMPLE_SETUP_GUIDE.md](SIMPLE_SETUP_GUIDE.md)** - Non-technical setup guide
+- **[USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)** - Deployment options
+- **[MULTI_TEACHER_GUIDE.md](MULTI_TEACHER_GUIDE.md)** - Multi-teacher setup
+- **[DELETE_FUNCTIONALITY_UPDATE.md](DELETE_FUNCTIONALITY_UPDATE.md)** - Delete features
 
 ---
 
-## 📂 **Project Structure**
+## 🎯 Usage Guide
+
+### **For Teachers:**
+
+1. **Register Account:**
+   - Home page → Teacher Portal
+   - Click "Register new teacher account"
+   - Fill form → Register
+
+2. **Add Courses:**
+   - Login → Courses tab
+   - Add: Mathematics, Physics, etc.
+
+3. **Add Timings:**
+   - Timings tab
+   - Add: Morning (8AM-12PM), Evening (2PM-6PM)
+
+4. **Create Test:**
+   - Tests tab
+   - Select course, timing, month
+   - Leave unlock dates blank (or set dates)
+   - Create Test
+
+5. **Add Questions:**
+   - Questions tab
+   - Select test
+   - Add minimum 10 questions
+   - Fill question, options, correct answer
+
+6. **View Results:**
+   - Results tab
+   - Filter by month
+   - Export to Excel
+
+### **For Students:**
+
+1. **Open URL:**
+   - `http://localhost:3000` (same computer)
+   - `http://192.168.1.100:3000` (network)
+
+2. **Student Portal:**
+   - Enter Student ID
+   - Enter Name
+   - Select Course
+   - Select Timing
+   - Select Month
+
+3. **Take Test:**
+   - Click "Start Test"
+   - Full-screen mode
+   - 30-minute timer
+   - Answer questions
+   - Submit
+
+4. **View Results:**
+   - Score displayed
+   - Percentage shown
+   - Pass/Fail status
+
+---
+
+## 🔧 Technical Details
+
+### **Tech Stack:**
+- **Backend:** Node.js + Express
+- **Database:** SQLite3
+- **Frontend:** Vanilla JavaScript
+- **Authentication:** JWT
+- **Styling:** Custom CSS
+
+### **Database Schema:**
+- Organizations
+- Teachers
+- Courses
+- Timings
+- Tests
+- Questions
+- Student Attempts
+
+### **Security:**
+- Password hashing (bcrypt)
+- JWT authentication
+- SQL injection prevention
+- XSS protection
+- CSRF protection
+
+---
+
+## 📦 Project Structure
 
 ```
-institute-mcq-test-system/
-├── server.js                 # Main backend server
-├── package.json              # Dependencies
-├── database.db               # SQLite database (auto-created)
+mcq-system/
 ├── public/
-│   ├── index.html           # Home page
-│   ├── test.html            # Student test page
-│   ├── teacher.html         # Teacher dashboard
-│   ├── style.css            # Main styles
-│   ├── script.js            # Home page JS
-│   ├── test-script.js       # Test functionality
-│   └── teacher-script.js    # Dashboard functionality
-└── README.md                # This file
+│   ├── index.html              # Home page
+│   ├── teacher.html            # Teacher dashboard
+│   ├── student.html            # Student test page
+│   ├── register.html           # Teacher registration
+│   ├── style.css               # Styles
+│   ├── script.js               # Main JS
+│   ├── teacher-script.js       # Teacher JS
+│   └── student-script.js       # Student JS
+├── server.js                   # Express server
+├── package.json                # Dependencies
+├── database.db                 # SQLite database (auto-created)
+├── START.bat                   # Windows launcher
+├── GET_IP.bat                  # IP address tool
+├── OPEN_BROWSER.bat            # Browser opener
+└── README.md                   # This file
 ```
 
 ---
 
-## 🌐 **Domain Pe Host Kaise Karein**
+## 🌐 Deployment Options
 
-### **Option 1: Railway.app (Free & Easy)**
+### **1. Local Network (School/Institute):**
+- Install on one computer
+- Share IP with students/teachers
+- Same WiFi required
 
-1. [Railway.app](https://railway.app) pe account banao
-2. "New Project" → "Deploy from GitHub"
-3. Repository select karo
-4. Automatic deploy!
-5. Custom domain add karo (optional)
+### **2. USB Portable:**
+- Copy to USB drive
+- Run from USB
+- No installation needed
+- See: [USB_AND_NETWORK_GUIDE.md](USB_AND_NETWORK_GUIDE.md)
 
-**Cost:** Free tier available
+### **3. Cloud Hosting (Internet):**
 
----
-
-### **Option 2: Render.com (Free)**
-
-1. [Render.com](https://render.com) pe account banao
-2. "New" → "Web Service"
-3. GitHub connect karo
-4. Settings:
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-5. Deploy!
-
-**Cost:** Free tier available
-
----
-
-### **Option 3: VPS (DigitalOcean, Linode, etc.)**
-
-**Server Setup:**
+**Railway.app (Free):**
 ```bash
-# SSH login
-ssh root@your-server-ip
-
-# Node.js install
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Code download
-git clone https://github.com/FarisDataAnalysts/institute-mcq-test-system.git
-cd institute-mcq-test-system
-
-# Install dependencies
-npm install
-
-# PM2 install (process manager)
-sudo npm install -g pm2
-
-# Start application
-pm2 start server.js --name mcq-system
-
-# Auto-restart on reboot
-pm2 startup
-pm2 save
+# 1. Push to GitHub
+# 2. Connect Railway to GitHub
+# 3. Deploy automatically
+# URL: https://your-app.railway.app
 ```
 
-**Domain Setup with Nginx:**
+**Render.com (Free):**
 ```bash
-# Nginx install
-sudo apt install nginx
-
-# Config file banao
-sudo nano /etc/nginx/sites-available/mcq-system
+# 1. Push to GitHub
+# 2. Create new Web Service
+# 3. Connect repository
+# URL: https://your-app.onrender.com
 ```
 
-**Paste this:**
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-**Enable & SSL:**
+**VPS (DigitalOcean, AWS, etc.):**
 ```bash
-# Enable site
-sudo ln -s /etc/nginx/sites-available/mcq-system /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-
-# SSL Certificate (HTTPS)
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
+# 1. SSH to server
+# 2. Clone repository
+# 3. npm install
+# 4. npm start
+# 5. Setup domain + SSL
 ```
 
-**Cost:** $5-10/month
+---
+
+## 🔒 Security Best Practices
+
+### **Production Deployment:**
+
+1. **Change JWT Secret:**
+   ```javascript
+   // In server.js
+   const JWT_SECRET = 'your-super-secret-key-here';
+   ```
+
+2. **Use Environment Variables:**
+   ```bash
+   # Create .env file
+   JWT_SECRET=your-secret-key
+   PORT=3000
+   NODE_ENV=production
+   ```
+
+3. **Enable HTTPS:**
+   - Use reverse proxy (Nginx)
+   - SSL certificate (Let's Encrypt)
+
+4. **Database Backup:**
+   ```bash
+   # Backup database.db regularly
+   cp database.db database_backup_$(date +%Y%m%d).db
+   ```
+
+5. **Firewall Rules:**
+   - Allow only port 3000
+   - Block direct database access
 
 ---
 
-## 🎯 **Usage Guide (استعمال کی رہنمائی)**
+## 🐛 Troubleshooting
 
-### **For Teachers (اساتذہ کے لیے):**
+### **Problem: npm is not recognized**
+**Solution:** Install Node.js from https://nodejs.org
 
-**1. Login:**
-- Username: `teacher1`
-- Password: `teacher123`
-
-**2. Add Courses:**
-- Courses tab pe jao
-- Course name enter karo (e.g., Mathematics)
-- "Add Course" click karo
-
-**3. Add Timings:**
-- Timing enter karo (e.g., Morning 8AM-12PM)
-- "Add Timing" click karo
-
-**4. Create Test:**
-- Tests tab pe jao
-- Course select karo
-- Timing select karo
-- Month select karo (1-4)
-- Unlock dates set karo (optional)
-- Duration set karo (default 30 min)
-- "Create Test" click karo
-
-**5. Add Questions:**
-- Questions tab pe jao
-- Test select karo
-- Question enter karo
-- 4 options enter karo (A, B, C, D)
-- Correct answer select karo
-- "Add Question" click karo
-- **Minimum 10 questions** add karo
-
-**6. View Results:**
-- Results tab pe jao
-- Month filter karo (optional)
-- "Export to Excel" click karo
-
----
-
-### **For Students (طلباء کے لیے):**
-
-**1. Home Page:**
-- "Student Portal" click karo
-
-**2. Login:**
-- Student ID enter karo
-- Name enter karo
-- Course select karo
-- Timing select karo
-- Month select karo
-- "Start Test" click karo
-
-**3. Test:**
-- Full-screen mode automatic
-- Timer start hoga
-- Har question answer karo
-- "Next" button se aage baro
-- Last question pe "Submit Test"
-
-**4. Results:**
-- Instant results dikhenge
-- Score aur percentage
-
----
-
-## ⚙️ **Configuration (ترتیبات)**
-
-### **Change Port:**
-`server.js` mein:
-```javascript
-const PORT = process.env.PORT || 3000; // Change to 8080, 5000, etc.
-```
-
-### **Change JWT Secret:**
-`server.js` mein:
-```javascript
-const JWT_SECRET = 'your-super-secret-key-here-change-this';
-```
-
-### **Change Test Duration:**
-Teacher dashboard se test create karte waqt duration set karo.
-
-### **Add More Months:**
-Currently 4 months. Code mein easily extend kar sakte ho.
-
----
-
-## 🔧 **Troubleshooting (مسائل کا حل)**
-
-### **Problem: "npm is not recognized"**
-**Solution:** Node.js install nahi hai. [Download karo](https://nodejs.org)
-
-### **Problem: "Port 3000 already in use"**
+### **Problem: Port 3000 already in use**
 **Solution:**
 ```bash
 # Windows
 netstat -ano | findstr :3000
-taskkill /PID <PID_NUMBER> /F
+taskkill /PID <NUMBER> /F
 
 # Mac/Linux
-lsof -ti:3000 | xargs kill -9
+lsof -ti:3000 | xargs kill
 ```
 
-### **Problem: "Cannot find module"**
+### **Problem: Test not showing for students**
 **Solution:**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
+1. Add minimum 10 questions
+2. Check unlock dates (leave blank or set to today)
+3. Verify course/timing/month match
 
-### **Problem: "Database locked"**
+### **Problem: Cannot access from other computers**
 **Solution:**
-```bash
-rm database.db
-npm start
-```
-
-### **Problem: Folder name mein space hai**
-**Solution:**
-```bash
-cd "C:\Users\Name\Desktop\folder with spaces"
-```
-Ya folder rename karo (no spaces).
+1. Check same WiFi network
+2. Verify IP address (GET_IP.bat)
+3. Allow firewall (see above)
+4. Restart server
 
 ---
 
-## 📊 **Database Schema**
+## 📊 Demo Credentials
 
-```sql
-organizations       # Institutes
-├── teachers       # Teacher accounts
-│   ├── courses    # Courses per teacher
-│   ├── timings    # Timings per teacher
-│   └── tests      # Tests per teacher
-│       └── questions  # Questions per test
-└── student_attempts   # Test results
-```
+**Teacher Login:**
+- Username: `teacher1`
+- Password: `teacher123`
+
+**Create New Teacher:**
+- Home page → Teacher Portal
+- Click "Register new teacher account"
 
 ---
 
-## 🚀 **Production Deployment Checklist**
+## 🎯 Roadmap
 
-- [ ] Change JWT_SECRET
-- [ ] Use PostgreSQL/MySQL instead of SQLite
-- [ ] Setup HTTPS/SSL
-- [ ] Setup backup system
-- [ ] Add email notifications
-- [ ] Setup monitoring (PM2, New Relic)
-- [ ] Configure firewall
-- [ ] Setup CDN (optional)
-- [ ] Add rate limiting
-- [ ] Setup logging
-
----
-
-## 📱 **Future Features (آنے والی خصوصیات)**
-
-- [ ] Image support in questions
-- [ ] Video explanations
-- [ ] Practice mode
-- [ ] Leaderboard
+- [ ] Question import from Excel
+- [ ] Bulk question upload
+- [ ] Question categories/tags
+- [ ] Random question selection
+- [ ] Negative marking option
+- [ ] Student performance analytics
 - [ ] Email notifications
+- [ ] SMS integration
 - [ ] Mobile app (React Native)
-- [ ] Analytics dashboard
-- [ ] Bulk question upload (Excel)
-- [ ] Question categories
-- [ ] Difficulty levels
+- [ ] Advanced reporting
 
 ---
 
-## 📄 **License**
+## 🤝 Contributing
 
-MIT License - Free to use for personal and commercial projects.
+Contributions welcome! Please:
 
----
-
-## 🤝 **Support**
-
-**Issues:** [GitHub Issues](https://github.com/FarisDataAnalysts/institute-mcq-test-system/issues)
-
-**Email:** support@yourdomain.com
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Open Pull Request
 
 ---
 
-## 🎓 **Credits**
+## 📄 License
 
-Created with ❤️ for educational institutes worldwide.
-
-**Special Thanks:**
-- Node.js Community
-- Express.js Team
-- SQLite Team
+MIT License - Free to use, modify, and distribute.
 
 ---
 
-## 📞 **Contact**
+## 👨‍💻 Author
 
-For customization, support, or queries:
+**Faris - Data Analyst**
+- Email: thepersonalityschool43@gmail.com
 - GitHub: [@FarisDataAnalysts](https://github.com/FarisDataAnalysts)
+
+---
+
+## 🙏 Support
+
+If you find this helpful:
+- ⭐ Star the repository
+- 🐛 Report bugs
+- 💡 Suggest features
+- 📢 Share with others
+
+---
+
+## 📞 Contact
+
+**Issues/Questions:**
+- GitHub Issues: [Create Issue](https://github.com/FarisDataAnalysts/institute-mcq-test-system/issues)
 - Email: thepersonalityschool43@gmail.com
 
 ---
 
-## ⭐ **Star This Repo**
-
-Agar yeh system helpful laga toh GitHub pe **Star** zaroor dena! 🌟
+**Made with ❤️ for Education | تعلیم کے لیے محبت سے بنایا گیا**
 
 ---
 
-**Made in Pakistan 🇵🇰 | بنایا گیا پاکستان میں**
+## 🎉 Quick Links
+
+- [Download ZIP](https://github.com/FarisDataAnalysts/institute-mcq-test-system/archive/refs/heads/main.zip)
+- [Simple Setup Guide](SIMPLE_SETUP_GUIDE.md)
+- [USB & Network Guide](USB_AND_NETWORK_GUIDE.md)
+- [Multi-Teacher Guide](MULTI_TEACHER_GUIDE.md)
+- [Report Issue](https://github.com/FarisDataAnalysts/institute-mcq-test-system/issues)
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** January 2026
