@@ -50,34 +50,20 @@
         }
         
         .tab {
-            padding: 15px 30px;
+            padding: 15px 25px;
             background: white;
             border: none;
             cursor: pointer;
             font-size: 16px;
-            border-radius: 8px 8px 0 0;
             transition: all 0.3s;
-            border: 2px solid transparent;
+            border-bottom: 3px solid transparent;
         }
         
-        .tab:hover { background: #f0f0f0; }
-        .tab.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
+        .tab:hover { background: #ecf0f1; }
+        .tab.active { border-bottom-color: #3498db; color: #3498db; font-weight: bold; }
         
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-        
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         
         .card {
             background: white;
@@ -88,14 +74,14 @@
         }
         
         .card h2 {
-            color: #2c3e50;
             margin-bottom: 20px;
-            padding-bottom: 10px;
+            color: #2c3e50;
             border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .form-group label {
@@ -148,26 +134,27 @@
             border-collapse: collapse;
             margin-top: 20px;
             background: white;
-        }
-        
-        table th,
-        table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
         }
         
         table th {
-            background: #34495e;
+            background: #3498db;
             color: white;
-            font-weight: bold;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
         }
         
         table tr:hover { background: #f8f9fa; }
         
         .list-item {
-            background: #f8f9fa;
             padding: 15px;
+            background: #ecf0f1;
             margin-bottom: 10px;
             border-radius: 5px;
             border-left: 4px solid #3498db;
@@ -271,6 +258,15 @@
                 <button class="btn btn-success" onclick="showTab('questions')">➕ Add Questions</button>
                 <button class="btn btn-warning" onclick="showTab('results')">📊 View Results</button>
             </div>
+            
+            <div class="card">
+                <h2>⚠️ Reset Dashboard</h2>
+                <p style="color: #e74c3c; margin-bottom: 15px;">
+                    <strong>Warning:</strong> This will delete ALL your courses, tests, questions, and student results. 
+                    Use this to start a new session from zero.
+                </p>
+                <button class="btn btn-danger" onclick="resetDashboard()">🗑️ Clear All Data & Start Fresh</button>
+            </div>
         </div>
 
         <!-- Courses Tab -->
@@ -279,25 +275,25 @@
                 <h2>Add New Course</h2>
                 <div class="form-group">
                     <label>Course Name</label>
-                    <input type="text" id="courseName" placeholder="e.g., Mathematics, Physics, Chemistry">
+                    <input type="text" id="courseName" placeholder="e.g., Mathematics, Physics">
                 </div>
-                <button onclick="addCourse()" class="btn btn-success">Add Course</button>
+                <button class="btn btn-success" onclick="addCourse()">Add Course</button>
             </div>
-
+            
             <div class="card">
                 <h2>Your Courses</h2>
                 <div id="coursesList"></div>
             </div>
-
+            
             <div class="card">
                 <h2>Add New Timing</h2>
                 <div class="form-group">
                     <label>Timing</label>
-                    <input type="text" id="timingName" placeholder="e.g., Morning (8AM-12PM), Evening (2PM-6PM)">
+                    <input type="text" id="timingName" placeholder="e.g., Morning (8AM-12PM)">
                 </div>
-                <button onclick="addTiming()" class="btn btn-success">Add Timing</button>
+                <button class="btn btn-success" onclick="addTiming()">Add Timing</button>
             </div>
-
+            
             <div class="card">
                 <h2>Your Timings</h2>
                 <div id="timingsList"></div>
@@ -310,15 +306,16 @@
                 <h2>Create New Test</h2>
                 <div class="form-group">
                     <label>Course</label>
-                    <select id="testCourse"></select>
+                    <select id="testCourse" required></select>
                 </div>
                 <div class="form-group">
                     <label>Timing</label>
-                    <select id="testTiming"></select>
+                    <select id="testTiming" required></select>
                 </div>
                 <div class="form-group">
                     <label>Month</label>
-                    <select id="testMonth">
+                    <select id="testMonth" required>
+                        <option value="">-- Select Month --</option>
                         <option value="1">Month 1</option>
                         <option value="2">Month 2</option>
                         <option value="3">Month 3</option>
@@ -326,20 +323,20 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Unlock Start Date</label>
+                    <label>Unlock Start Date (Optional - Leave blank for immediate access)</label>
                     <input type="date" id="unlockStart">
                 </div>
                 <div class="form-group">
-                    <label>Unlock End Date</label>
+                    <label>Unlock End Date (Optional - Leave blank for no expiry)</label>
                     <input type="date" id="unlockEnd">
                 </div>
                 <div class="form-group">
-                    <label>Duration (minutes)</label>
+                    <label>Test Duration (Minutes)</label>
                     <input type="number" id="testDuration" value="30" min="10" max="180">
                 </div>
-                <button onclick="createTest()" class="btn btn-success">Create Test</button>
+                <button class="btn btn-success" onclick="createTest()">Create Test</button>
             </div>
-
+            
             <div class="card">
                 <h2>Your Tests</h2>
                 <div id="testsList"></div>
@@ -350,15 +347,16 @@
         <div id="questions" class="tab-content">
             <div class="card">
                 <h2>Select Test</h2>
-                <select id="questionTestSelect" onchange="loadQuestions()">
-                    <option value="">-- Select Test --</option>
-                </select>
+                <div class="form-group">
+                    <label>Test</label>
+                    <select id="questionTestSelect" onchange="loadQuestions()"></select>
+                </div>
             </div>
             
-            <div class="card" id="questionForm" style="display:none;">
+            <div id="questionForm" class="card" style="display: none;">
                 <h2>Add Question</h2>
                 <div class="form-group">
-                    <label>Question</label>
+                    <label>Question Text</label>
                     <textarea id="questionText" rows="3" placeholder="Enter your question here"></textarea>
                 </div>
                 <div class="form-group">
@@ -386,7 +384,7 @@
                         <option value="D">D</option>
                     </select>
                 </div>
-                <button onclick="addQuestion()" class="btn btn-success">Add Question</button>
+                <button class="btn btn-success" onclick="addQuestion()">Add Question</button>
             </div>
             
             <div class="card">
@@ -398,8 +396,9 @@
         <!-- Results Tab -->
         <div id="results" class="tab-content">
             <div class="card">
-                <h2>Filter Results</h2>
+                <h2>Student Results</h2>
                 <div class="filter-bar">
+                    <label>Filter by Month:</label>
                     <select id="resultMonth" onchange="loadResults()">
                         <option value="">All Months</option>
                         <option value="1">Month 1</option>
@@ -407,12 +406,8 @@
                         <option value="3">Month 3</option>
                         <option value="4">Month 4</option>
                     </select>
-                    <button onclick="exportResults()" class="btn btn-success">📥 Export to Excel</button>
+                    <button class="btn btn-success" onclick="exportResults()">📥 Export to Excel</button>
                 </div>
-            </div>
-            
-            <div class="card">
-                <h2>Student Results</h2>
                 <div id="resultsList"></div>
             </div>
         </div>
