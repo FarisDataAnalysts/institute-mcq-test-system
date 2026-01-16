@@ -530,6 +530,39 @@ function exportResults() {
     window.open(url, '_blank');
 }
 
+// ========== RESET DASHBOARD ==========
+
+function resetDashboard() {
+    const confirmation = confirm('⚠️ WARNING: This will DELETE ALL your data including:\n\n• All Courses\n• All Timings\n• All Tests\n• All Questions\n• All Student Results\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to continue?');
+    
+    if (!confirmation) return;
+    
+    const doubleCheck = prompt('Type "DELETE" to confirm (all caps):');
+    
+    if (doubleCheck !== 'DELETE') {
+        alert('Reset cancelled. Your data is safe.');
+        return;
+    }
+    
+    fetch('/api/teacher/reset', {
+        method: 'POST',
+        headers
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Dashboard reset successfully! Starting fresh...');
+            loadDashboard();
+        } else {
+            alert('Error resetting dashboard');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error resetting dashboard');
+    });
+}
+
 // ========== POPULATE SELECTS ==========
 
 function populateSelects() {
