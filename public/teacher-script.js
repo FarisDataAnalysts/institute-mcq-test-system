@@ -123,7 +123,7 @@ function renderCourses() {
     const list = document.getElementById('coursesList');
     
     if (!dashboardData.courses || dashboardData.courses.length === 0) {
-        list.innerHTML = '<div class=\"empty-state\"><h3>No courses yet</h3><p>Add your first course to get started</p></div>';
+        list.innerHTML = '<div class="empty-state"><h3>No courses yet</h3><p>Add your first course to get started</p></div>';
         return;
     }
     
@@ -196,7 +196,7 @@ function renderTimings() {
     const list = document.getElementById('timingsList');
     
     if (!dashboardData.timings || dashboardData.timings.length === 0) {
-        list.innerHTML = '<div class=\"empty-state\"><h3>No timings yet</h3><p>Add your first timing to get started</p></div>';
+        list.innerHTML = '<div class="empty-state"><h3>No timings yet</h3><p>Add your first timing to get started</p></div>';
         return;
     }
     
@@ -290,7 +290,7 @@ function renderTests() {
     const list = document.getElementById('testsList');
     
     if (!dashboardData.tests || dashboardData.tests.length === 0) {
-        list.innerHTML = '<div class=\"empty-state\"><h3>No tests yet</h3><p>Create your first test to get started</p></div>';
+        list.innerHTML = '<div class="empty-state"><h3>No tests yet</h3><p>Create your first test to get started</p></div>';
         return;
     }
     
@@ -343,7 +343,7 @@ function loadQuestions() {
     const testId = document.getElementById('questionTestSelect').value;
     
     if (!testId) {
-        document.getElementById('questionsList').innerHTML = '<div class=\"empty-state\"><h3>Select a test</h3><p>Choose a test to view and manage questions</p></div>';
+        document.getElementById('questionsList').innerHTML = '<div class="empty-state"><h3>Select a test</h3><p>Choose a test to view and manage questions</p></div>';
         return;
     }
     
@@ -363,7 +363,7 @@ function renderQuestions() {
     const list = document.getElementById('questionsList');
     
     if (allQuestions.length === 0) {
-        list.innerHTML = '<div class=\"empty-state\"><h3>No questions yet</h3><p>Add questions to this test</p></div>';
+        list.innerHTML = '<div class="empty-state"><h3>No questions yet</h3><p>Add questions to this test</p></div>';
         return;
     }
     
@@ -396,6 +396,11 @@ function addQuestion() {
     const option_c = document.getElementById('optionC').value.trim();
     const option_d = document.getElementById('optionD').value.trim();
     const correct_answer = document.getElementById('correctAnswer').value;
+    
+    if (!testId) {
+        alert('Please select a test first');
+        return;
+    }
     
     if (!question_text || !option_a || !option_b || !option_c || !option_d) {
         alert('Please fill all fields');
@@ -436,6 +441,66 @@ function addQuestion() {
     .catch(err => {
         console.error('Error:', err);
         alert('Error adding question');
+    });
+}
+
+// ========== AI QUESTION GENERATOR ==========
+
+function generateAIQuestions() {
+    const testId = document.getElementById('questionTestSelect').value;
+    const topic = document.getElementById('aiTopic').value.trim();
+    const difficulty = document.getElementById('aiDifficulty').value;
+    const count = parseInt(document.getElementById('aiCount').value);
+    
+    if (!testId) {
+        alert('Please select a test first');
+        return;
+    }
+    
+    if (!topic) {
+        alert('Please enter a topic');
+        return;
+    }
+    
+    if (count < 1 || count > 20) {
+        alert('Please enter a number between 1 and 20');
+        return;
+    }
+    
+    // Show loading
+    const originalBtn = event.target;
+    originalBtn.disabled = true;
+    originalBtn.textContent = '🤖 Generating...';
+    
+    fetch('/api/teacher/ai/generate-questions', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            topic,
+            difficulty,
+            count,
+            test_id: testId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ ${count} AI questions generated successfully!\n\n${data.message || ''}`);
+            // Clear form
+            document.getElementById('aiTopic').value = '';
+            document.getElementById('aiCount').value = '5';
+            loadQuestions();
+        } else {
+            alert('Error generating questions: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error generating questions: ' + err.message);
+    })
+    .finally(() => {
+        originalBtn.disabled = false;
+        originalBtn.textContent = '🤖 Generate Questions with AI';
     });
 }
 
@@ -482,7 +547,7 @@ function renderResults(results) {
     const list = document.getElementById('resultsList');
     
     if (results.length === 0) {
-        list.innerHTML = '<div class=\"empty-state\"><h3>No results yet</h3><p>Results will appear here after students take tests</p></div>';
+        list.innerHTML = '<div class="empty-state"><h3>No results yet</h3><p>Results will appear here after students take tests</p></div>';
         return;
     }
     
