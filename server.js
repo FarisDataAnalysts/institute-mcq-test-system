@@ -2,46 +2,36 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const PORT = 3000;
+const JWT_SECRET = 'your-secret-key-change-in-production';
 
 // Middleware
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 app.use(express.static('public'));
 
 // Database Setup
-const db = new sqlite3.Database('./database.db', (err) => {
+const db = new sqlite3.Database('./data/database.db', (err) => {
   if (err) console.error('Database error:', err);
-  else console.log('✅ Connected to SQLite database');
+  else console.log('✅ Connected to database');
 });
 
 // Create Tables
 db.serialize(() => {
-  // Organizations
-  db.run(`CREATE TABLE IF NOT EXISTS organizations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-
-  // Teachers
+  // Teachers table
   db.run(`CREATE TABLE IF NOT EXISTS teachers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    org_id INTEGER NOT NULL,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (org_id) REFERENCES organizations(id)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
-
-  // Courses
+  
+  // Courses table
   db.run(`CREATE TABLE IF NOT EXISTS courses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     teacher_id INTEGER NOT NULL,
@@ -49,8 +39,8 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (teacher_id) REFERENCES teachers(id)
   )`);
-
-  // Timings
+  
+  // Timings table
   db.run(`CREATE TABLE IF NOT EXISTS timings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     teacher_id INTEGER NOT NULL,
@@ -58,8 +48,8 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (teacher_id) REFERENCES teachers(id)
   )`);
-
-  // Tests
+  
+  // Tests table
   db.run(`CREATE TABLE IF NOT EXISTS tests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     teacher_id INTEGER NOT NULL,
@@ -75,8 +65,8 @@ db.serialize(() => {
     FOREIGN KEY (course_id) REFERENCES courses(id),
     FOREIGN KEY (timing_id) REFERENCES timings(id)
   )`);
-
-  // Questions
+  
+  // Questions table
   db.run(`CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     test_id INTEGER NOT NULL,
@@ -89,8 +79,8 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
   )`);
-
-  // Student Attempts
+  
+  // Student Attempts table
   db.run(`CREATE TABLE IF NOT EXISTS student_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     test_id INTEGER NOT NULL,
@@ -101,153 +91,100 @@ db.serialize(() => {
     month INTEGER NOT NULL,
     score INTEGER NOT NULL,
     total_questions INTEGER NOT NULL,
-    answers TEXT NOT NULL,
-    started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    completed_at DATETIME,
+    answers TEXT,
+    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (test_id) REFERENCES tests(id)
   )`);
-
-  // Create demo data
-  db.get("SELECT COUNT(*) as count FROM organizations", (err, row) => {
-    if (row.count === 0) {
-      db.run(`INSERT INTO organizations (name) VALUES ('Demo Institute')`, function() {
-        const orgId = this.lastID;
-        bcrypt.hash('teacher123', 10, (err, hash) => {
-          db.run(`INSERT INTO teachers (org_id, username, password, name) VALUES (?, ?, ?, ?)`,
-            [orgId, 'teacher1', hash, 'Mr. Ahmed'], function() {
-              const teacherId = this.lastID;
-              db.run(`INSERT INTO courses (teacher_id, name) VALUES (?, 'Mathematics')`, [teacherId]);
-              db.run(`INSERT INTO courses (teacher_id, name) VALUES (?, 'Physics')`, [teacherId]);
-              db.run(`INSERT INTO timings (teacher_id, timing) VALUES (?, 'Morning (8AM-12PM)')`, [teacherId]);
-              db.run(`INSERT INTO timings (teacher_id, timing) VALUES (?, 'Evening (2PM-6PM)')`, [teacherId]);
-              console.log('✅ Demo data created');
-              console.log('📝 Demo Login: teacher1 / teacher123');
-            });
-        });
-      });
-    }
-  });
 });
 
 // Auth Middleware
-const authenticateTeacher = (req, res, next) => {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Authentication required' });
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
   
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.teacherId = decoded.teacherId;
-    req.orgId = decoded.orgId;
+  if (!token) return res.status(401).json({ error: 'Access denied' });
+  
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
     next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
+  });
 };
 
-// ============ TEACHER ROUTES ============
+// ============ AUTH ROUTES ============
 
 // Teacher Login
 app.post('/api/teacher/login', (req, res) => {
   const { username, password } = req.body;
   
-  db.get('SELECT * FROM teachers WHERE username = ?', [username], (err, teacher) => {
+  db.get('SELECT * FROM teachers WHERE username = ?', [username], async (err, teacher) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!teacher) return res.status(401).json({ error: 'Invalid credentials' });
     
-    bcrypt.compare(password, teacher.password, (err, match) => {
-      if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-      
-      const token = jwt.sign(
-        { teacherId: teacher.id, orgId: teacher.org_id },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-      
-      res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-      res.json({ 
-        success: true, 
-        token,
-        teacher: { id: teacher.id, name: teacher.name, username: teacher.username }
-      });
-    });
+    const validPassword = await bcrypt.compare(password, teacher.password);
+    if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    
+    const token = jwt.sign({ id: teacher.id, username: teacher.username }, JWT_SECRET);
+    res.json({ success: true, token, name: teacher.name });
   });
 });
 
 // Teacher Registration
-app.post('/api/teacher/register', (req, res) => {
-  const { name, username, password } = req.body;
+app.post('/api/teacher/register', async (req, res) => {
+  const { username, password, name } = req.body;
   
-  if (!name || !username || !password) {
+  if (!username || !password || !name) {
     return res.status(400).json({ error: 'All fields are required' });
   }
   
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  }
+  const hashedPassword = await bcrypt.hash(password, 10);
   
-  db.get('SELECT id FROM teachers WHERE username = ?', [username], (err, existing) => {
-    if (existing) {
-      return res.status(400).json({ error: 'Username already exists' });
-    }
-    
-    db.get('SELECT id FROM organizations LIMIT 1', (err, org) => {
-      if (!org) {
-        db.run('INSERT INTO organizations (name) VALUES (?)', ['Default Institute'], function() {
-          createTeacher(this.lastID);
-        });
-      } else {
-        createTeacher(org.id);
+  db.run('INSERT INTO teachers (username, password, name) VALUES (?, ?, ?)',
+    [username, hashedPassword, name],
+    function(err) {
+      if (err) {
+        if (err.message.includes('UNIQUE')) {
+          return res.status(400).json({ error: 'Username already exists' });
+        }
+        return res.status(500).json({ error: err.message });
       }
-    });
-    
-    function createTeacher(orgId) {
-      bcrypt.hash(password, 10, (err, hash) => {
-        if (err) return res.status(500).json({ error: 'Error creating account' });
-        
-        db.run(
-          'INSERT INTO teachers (org_id, username, password, name) VALUES (?, ?, ?, ?)',
-          [orgId, username, hash, name],
-          function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ 
-              success: true, 
-              message: 'Registration successful',
-              teacherId: this.lastID
-            });
-          }
-        );
-      });
+      
+      const token = jwt.sign({ id: this.lastID, username }, JWT_SECRET);
+      res.json({ success: true, token, name });
     }
-  });
+  );
 });
 
-// Get Teacher Dashboard Data
-app.get('/api/teacher/dashboard', authenticateTeacher, (req, res) => {
-  const data = {};
+// ============ TEACHER ROUTES ============
+
+// Get Dashboard Data
+app.get('/api/teacher/dashboard', authenticateToken, (req, res) => {
+  const teacherId = req.user.id;
   
-  db.all('SELECT * FROM courses WHERE teacher_id = ?', [req.teacherId], (err, courses) => {
-    data.courses = courses || [];
-    
-    db.all('SELECT * FROM timings WHERE teacher_id = ?', [req.teacherId], (err, timings) => {
-      data.timings = timings || [];
-      
+  db.all('SELECT * FROM courses WHERE teacher_id = ?', [teacherId], (err, courses) => {
+    db.all('SELECT * FROM timings WHERE teacher_id = ?', [teacherId], (err, timings) => {
       db.all(`SELECT t.*, c.name as course_name, tm.timing 
               FROM tests t 
               JOIN courses c ON t.course_id = c.id 
               JOIN timings tm ON t.timing_id = tm.id 
-              WHERE t.teacher_id = ?`, [req.teacherId], (err, tests) => {
-        data.tests = tests || [];
-        res.json(data);
+              WHERE t.teacher_id = ?`, [teacherId], (err, tests) => {
+        res.json({
+          courses: courses || [],
+          timings: timings || [],
+          tests: tests || []
+        });
       });
     });
   });
 });
 
 // Add Course
-app.post('/api/teacher/courses', authenticateTeacher, (req, res) => {
+app.post('/api/teacher/courses', authenticateToken, (req, res) => {
   const { name } = req.body;
+  const teacherId = req.user.id;
+  
   db.run('INSERT INTO courses (teacher_id, name) VALUES (?, ?)',
-    [req.teacherId, name],
+    [teacherId, name],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: this.lastID });
@@ -256,27 +193,27 @@ app.post('/api/teacher/courses', authenticateTeacher, (req, res) => {
 });
 
 // Delete Course
-app.delete('/api/teacher/courses/:courseId', authenticateTeacher, (req, res) => {
-  const { courseId } = req.params;
+app.delete('/api/teacher/courses/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const teacherId = req.user.id;
   
-  db.get('SELECT * FROM courses WHERE id = ? AND teacher_id = ?', 
-    [courseId, req.teacherId], 
-    (err, course) => {
-      if (!course) return res.status(403).json({ error: 'Unauthorized' });
+  // Check if course has tests
+  db.get('SELECT COUNT(*) as count FROM tests WHERE course_id = ? AND teacher_id = ?',
+    [id, teacherId],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
       
-      db.get('SELECT COUNT(*) as count FROM tests WHERE course_id = ?', 
-        [courseId], 
-        (err, result) => {
-          if (result.count > 0) {
-            return res.status(400).json({ 
-              error: 'Cannot delete course with existing tests. Delete tests first.' 
-            });
-          }
-          
-          db.run('DELETE FROM courses WHERE id = ?', [courseId], (err) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ success: true });
-          });
+      if (result.count > 0) {
+        return res.status(400).json({ 
+          error: 'Cannot delete course with existing tests. Delete tests first.' 
+        });
+      }
+      
+      db.run('DELETE FROM courses WHERE id = ? AND teacher_id = ?',
+        [id, teacherId],
+        function(err) {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({ success: true });
         }
       );
     }
@@ -284,10 +221,12 @@ app.delete('/api/teacher/courses/:courseId', authenticateTeacher, (req, res) => 
 });
 
 // Add Timing
-app.post('/api/teacher/timings', authenticateTeacher, (req, res) => {
+app.post('/api/teacher/timings', authenticateToken, (req, res) => {
   const { timing } = req.body;
+  const teacherId = req.user.id;
+  
   db.run('INSERT INTO timings (teacher_id, timing) VALUES (?, ?)',
-    [req.teacherId, timing],
+    [teacherId, timing],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: this.lastID });
@@ -296,27 +235,27 @@ app.post('/api/teacher/timings', authenticateTeacher, (req, res) => {
 });
 
 // Delete Timing
-app.delete('/api/teacher/timings/:timingId', authenticateTeacher, (req, res) => {
-  const { timingId } = req.params;
+app.delete('/api/teacher/timings/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const teacherId = req.user.id;
   
-  db.get('SELECT * FROM timings WHERE id = ? AND teacher_id = ?', 
-    [timingId, req.teacherId], 
-    (err, timing) => {
-      if (!timing) return res.status(403).json({ error: 'Unauthorized' });
+  // Check if timing has tests
+  db.get('SELECT COUNT(*) as count FROM tests WHERE timing_id = ? AND teacher_id = ?',
+    [id, teacherId],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
       
-      db.get('SELECT COUNT(*) as count FROM tests WHERE timing_id = ?', 
-        [timingId], 
-        (err, result) => {
-          if (result.count > 0) {
-            return res.status(400).json({ 
-              error: 'Cannot delete timing with existing tests. Delete tests first.' 
-            });
-          }
-          
-          db.run('DELETE FROM timings WHERE id = ?', [timingId], (err) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ success: true });
-          });
+      if (result.count > 0) {
+        return res.status(400).json({ 
+          error: 'Cannot delete timing with existing tests. Delete tests first.' 
+        });
+      }
+      
+      db.run('DELETE FROM timings WHERE id = ? AND teacher_id = ?',
+        [id, teacherId],
+        function(err) {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({ success: true });
         }
       );
     }
@@ -324,12 +263,13 @@ app.delete('/api/teacher/timings/:timingId', authenticateTeacher, (req, res) => 
 });
 
 // Create Test
-app.post('/api/teacher/tests', authenticateTeacher, (req, res) => {
+app.post('/api/teacher/tests', authenticateToken, (req, res) => {
   const { course_id, timing_id, month, unlock_start, unlock_end, duration_minutes } = req.body;
+  const teacherId = req.user.id;
   
   db.run(`INSERT INTO tests (teacher_id, course_id, timing_id, month, unlock_start, unlock_end, duration_minutes)
           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [req.teacherId, course_id, timing_id, month, unlock_start, unlock_end, duration_minutes || 30],
+    [teacherId, course_id, timing_id, month, unlock_start, unlock_end, duration_minutes],
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: this.lastID });
@@ -338,88 +278,83 @@ app.post('/api/teacher/tests', authenticateTeacher, (req, res) => {
 });
 
 // Delete Test
-app.delete('/api/teacher/tests/:testId', authenticateTeacher, (req, res) => {
-  const { testId } = req.params;
+app.delete('/api/teacher/tests/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const teacherId = req.user.id;
   
-  db.get('SELECT * FROM tests WHERE id = ? AND teacher_id = ?', 
-    [testId, req.teacherId], 
-    (err, test) => {
-      if (!test) return res.status(403).json({ error: 'Unauthorized' });
+  // First delete all questions for this test
+  db.run('DELETE FROM questions WHERE test_id IN (SELECT id FROM tests WHERE id = ? AND teacher_id = ?)',
+    [id, teacherId],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
       
-      db.run('DELETE FROM questions WHERE test_id = ?', [testId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        
-        db.run('DELETE FROM tests WHERE id = ?', [testId], (err) => {
-          if (err) return res.status(500).json({ error: err.message });
-          res.json({ success: true });
-        });
-      });
-    }
-  );
-});
-
-// Get Test Questions
-app.get('/api/teacher/tests/:testId/questions', authenticateTeacher, (req, res) => {
-  const { testId } = req.params;
-  
-  db.get('SELECT * FROM tests WHERE id = ? AND teacher_id = ?', 
-    [testId, req.teacherId], 
-    (err, test) => {
-      if (!test) return res.status(403).json({ error: 'Unauthorized' });
-      
-      db.all('SELECT * FROM questions WHERE test_id = ?', [testId], (err, questions) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(questions || []);
-      });
-    }
-  );
-});
-
-// Add Question
-app.post('/api/teacher/questions', authenticateTeacher, (req, res) => {
-  const { test_id, question_text, option_a, option_b, option_c, option_d, correct_answer } = req.body;
-  
-  db.get('SELECT * FROM tests WHERE id = ? AND teacher_id = ?', 
-    [test_id, req.teacherId], 
-    (err, test) => {
-      if (!test) return res.status(403).json({ error: 'Unauthorized' });
-      
-      db.run(`INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_answer)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [test_id, question_text, option_a, option_b, option_c, option_d, correct_answer],
+      // Then delete the test
+      db.run('DELETE FROM tests WHERE id = ? AND teacher_id = ?',
+        [id, teacherId],
         function(err) {
           if (err) return res.status(500).json({ error: err.message });
-          res.json({ success: true, id: this.lastID });
+          res.json({ success: true });
         }
       );
     }
   );
 });
 
-// Delete Question
-app.delete('/api/teacher/questions/:questionId', authenticateTeacher, (req, res) => {
-  const { questionId } = req.params;
+// Get Test Questions
+app.get('/api/teacher/tests/:testId/questions', authenticateToken, (req, res) => {
+  const { testId } = req.params;
+  const teacherId = req.user.id;
   
-  db.get(`SELECT q.*, t.teacher_id 
-          FROM questions q 
+  db.all(`SELECT q.* FROM questions q 
           JOIN tests t ON q.test_id = t.id 
-          WHERE q.id = ?`, 
-    [questionId], 
-    (err, question) => {
-      if (!question || question.teacher_id !== req.teacherId) {
-        return res.status(403).json({ error: 'Unauthorized' });
-      }
-      
-      db.run('DELETE FROM questions WHERE id = ?', [questionId], (err) => {
+          WHERE q.test_id = ? AND t.teacher_id = ?`,
+    [testId, teacherId],
+    (err, questions) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(questions || []);
+    }
+  );
+});
+
+// Add Question
+app.post('/api/teacher/questions', authenticateToken, (req, res) => {
+  const { test_id, question_text, option_a, option_b, option_c, option_d, correct_answer } = req.body;
+  const teacherId = req.user.id;
+  
+  // Verify test belongs to teacher
+  db.get('SELECT id FROM tests WHERE id = ? AND teacher_id = ?', [test_id, teacherId], (err, test) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!test) return res.status(403).json({ error: 'Unauthorized' });
+    
+    db.run(`INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_answer)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [test_id, question_text, option_a, option_b, option_c, option_d, correct_answer],
+      function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
-      });
+        res.json({ success: true, id: this.lastID });
+      }
+    );
+  });
+});
+
+// Delete Question
+app.delete('/api/teacher/questions/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const teacherId = req.user.id;
+  
+  db.run(`DELETE FROM questions WHERE id = ? AND test_id IN 
+          (SELECT id FROM tests WHERE teacher_id = ?)`,
+    [id, teacherId],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
     }
   );
 });
 
 // Get Results
-app.get('/api/teacher/results', authenticateTeacher, (req, res) => {
+app.get('/api/teacher/results', authenticateToken, (req, res) => {
+  const teacherId = req.user.id;
   const { month } = req.query;
   
   let query = `SELECT sa.*, c.name as course_name, tm.timing 
@@ -429,7 +364,7 @@ app.get('/api/teacher/results', authenticateTeacher, (req, res) => {
                JOIN timings tm ON sa.timing_id = tm.id
                WHERE t.teacher_id = ?`;
   
-  const params = [req.teacherId];
+  const params = [teacherId];
   
   if (month) {
     query += ' AND sa.month = ?';
@@ -444,59 +379,58 @@ app.get('/api/teacher/results', authenticateTeacher, (req, res) => {
   });
 });
 
-// Export Results to CSV
-app.get('/api/teacher/results/export', authenticateTeacher, (req, res) => {
+// Export Results to Excel
+app.get('/api/teacher/results/export', authenticateToken, (req, res) => {
+  const teacherId = req.user.id;
   const { month } = req.query;
   
-  let query = `SELECT sa.student_id, sa.student_name, c.name as course_name, tm.timing, sa.month, sa.score, sa.total_questions
+  let query = `SELECT sa.*, c.name as course_name, tm.timing 
                FROM student_attempts sa
                JOIN tests t ON sa.test_id = t.id
                JOIN courses c ON sa.course_id = c.id
                JOIN timings tm ON sa.timing_id = tm.id
                WHERE t.teacher_id = ?`;
   
-  const params = [req.teacherId];
+  const params = [teacherId];
   
   if (month) {
     query += ' AND sa.month = ?';
     params.push(month);
   }
   
-  query += ' ORDER BY sa.student_id, sa.month';
+  query += ' ORDER BY sa.student_id, sa.course_id, sa.timing_id, sa.month';
   
   db.all(query, params, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     
-    // Group by student
-    const studentMap = {};
+    // Group by student, course, timing
+    const grouped = {};
     
     results.forEach(r => {
       const key = `${r.student_id}_${r.course_name}_${r.timing}`;
-      
-      if (!studentMap[key]) {
-        studentMap[key] = {
+      if (!grouped[key]) {
+        grouped[key] = {
           student_id: r.student_id,
           student_name: r.student_name,
           course: r.course_name,
           timing: r.timing,
-          month1: '',
-          month2: '',
-          month3: '',
-          month4: ''
+          months: {}
         };
       }
       
       const percentage = ((r.score / r.total_questions) * 100).toFixed(2);
-      studentMap[key][`month${r.month}`] = `${r.score}/${r.total_questions} (${percentage}%)`;
+      grouped[key].months[r.month] = `${r.score}/${r.total_questions} (${percentage}%)`;
     });
     
     // Convert to CSV
-    const students = Object.values(studentMap);
-    
     let csv = 'ID,Name,Course,Timing,Month 1,Month 2,Month 3,Month 4\n';
     
-    students.forEach(s => {
-      csv += `${s.student_id},"${s.student_name}","${s.course}","${s.timing}",${s.month1},${s.month2},${s.month3},${s.month4}\n`;
+    Object.values(grouped).forEach(student => {
+      csv += `${student.student_id},${student.student_name},${student.course},${student.timing},`;
+      csv += `${student.months[1] || '-'},`;
+      csv += `${student.months[2] || '-'},`;
+      csv += `${student.months[3] || '-'},`;
+      csv += `${student.months[4] || '-'}\n`;
     });
     
     res.setHeader('Content-Type', 'text/csv');
@@ -505,23 +439,28 @@ app.get('/api/teacher/results/export', authenticateTeacher, (req, res) => {
   });
 });
 
-// Reset Dashboard (Clear all data for teacher)
-app.post('/api/teacher/reset', authenticateTeacher, (req, res) => {
-  db.serialize(() => {
-    db.run('DELETE FROM student_attempts WHERE test_id IN (SELECT id FROM tests WHERE teacher_id = ?)', [req.teacherId]);
-    db.run('DELETE FROM questions WHERE test_id IN (SELECT id FROM tests WHERE teacher_id = ?)', [req.teacherId]);
-    db.run('DELETE FROM tests WHERE teacher_id = ?', [req.teacherId]);
-    db.run('DELETE FROM courses WHERE teacher_id = ?', [req.teacherId]);
-    db.run('DELETE FROM timings WHERE teacher_id = ?', [req.teacherId], (err) => {
+// Reset Dashboard - Delete ONLY student results, keep everything else
+app.post('/api/teacher/reset', authenticateToken, (req, res) => {
+  const teacherId = req.user.id;
+  
+  // Only delete student attempts for this teacher's tests
+  db.run(`DELETE FROM student_attempts WHERE test_id IN 
+          (SELECT id FROM tests WHERE teacher_id = ?)`,
+    [teacherId],
+    function(err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true, message: 'Dashboard reset successfully' });
-    });
-  });
+      res.json({ 
+        success: true, 
+        message: 'Student results cleared. Courses, tests, and questions are preserved.',
+        deleted_results: this.changes
+      });
+    }
+  );
 });
 
 // ============ STUDENT ROUTES ============
 
-// Get Available Tests
+// Get Available Tests (NO MINIMUM QUESTIONS CHECK)
 app.post('/api/student/tests', (req, res) => {
   const { course_id, timing_id, month } = req.body;
   const today = new Date().toISOString().split('T')[0];
@@ -539,14 +478,14 @@ app.post('/api/student/tests', (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
       if (!test) return res.json({ available: false, message: 'Test is not available at this time' });
       
-      // Check if test has minimum 10 questions
+      // Get question count (no minimum check)
       db.get('SELECT COUNT(*) as count FROM questions WHERE test_id = ?', [test.id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         
-        if (result.count < 10) {
+        if (result.count === 0) {
           return res.json({ 
             available: false, 
-            message: 'Test is not ready yet. Please contact your teacher.' 
+            message: 'Test has no questions yet. Please contact your teacher.' 
           });
         }
         
@@ -557,7 +496,7 @@ app.post('/api/student/tests', (req, res) => {
   );
 });
 
-// Get Test Questions
+// Get Test Questions (NO MINIMUM CHECK)
 app.post('/api/student/test/:testId/start', (req, res) => {
   const { testId } = req.params;
   
@@ -566,10 +505,11 @@ app.post('/api/student/test/:testId/start', (req, res) => {
     (err, questions) => {
       if (err) return res.status(500).json({ error: err.message });
       
-      if (questions.length < 10) {
-        return res.status(400).json({ error: 'Test does not have enough questions' });
+      if (questions.length === 0) {
+        return res.status(400).json({ error: 'Test has no questions' });
       }
       
+      // Shuffle questions
       questions.sort(() => Math.random() - 0.5);
       res.json({ questions });
     }
@@ -625,5 +565,5 @@ app.get('/api/student/options', (req, res) => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📝 Demo Login: teacher1 / teacher123\n`);
+  console.log(`📝 Register your teacher account at /index.html\n`);
 });
